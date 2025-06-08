@@ -1,0 +1,3197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linux Kernel Master Tool </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ace-builds@1.32.0/src-min-noconflict/ace.min.js"></script>
+    <style>
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        .nav-tabs {
+    display: flex;
+    list-style: none;
+    padding: 0;
+}
+.nav-tabs .tab {
+    padding: 10px 20px;
+    cursor: pointer;
+    background-color: #f0f0f0; /* Default background */
+    color: black;
+}
+.nav-tabs .tab.active {
+    background-color: blue; /* Blue highlight for active tab */
+    color: white;
+}
+.tab-content .content {
+    display: none;
+}
+.tab-content .content.active {
+    display: block;
+}
+        body {
+            position: relative;
+            margin: 0;
+            padding: 0;
+        }
+        /* Author details hidden by default */
+        .author-details {
+            display: none;
+            position: absolute;
+            top: 3rem; /* Below the button */
+            right: 1rem;
+            z-index: 50; /* Above other content */
+        }
+        /* Show author details when active */
+        .author-details.active {
+            display: block;
+        }
+        /* Style for the toggle button */
+        .author-toggle {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 100; /* Ensure button is above other elements */
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .code-editor {
+            height: 400px;
+            width: 100%;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+        .kernel-diagram {
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+    </style>
+</head>
+<!-- Toggle Button for Author Details -->
+    <button class="author-toggle bg-emerald-500 text-white px-4 py-2 rounded-lg hover:bg-emerald-600 transition">
+        Author Details
+    </button>
+<!-- Author Details -->
+    <div class="author-details bg-gray-800 shadow-lg rounded-lg p-5 text-sm space-y-2 w-64">
+        <h4 class="text-lg font-semibold text-emerald-400 border-b border-gray-700 pb-2">Author</h4>
+        <p class="text-gray-300">Name: <span class="font-medium text-white">Kunal Saraswat</span></p>
+        <p>
+            <a href="https://www.linkedin.com/in/kunalsaraswat/" target="_blank" class="text-blue-400 hover:text-blue-300 transition">
+                🔗 LinkedIn Profile
+            </a>
+        </p>
+        <p>
+            <a
+                href="https://mail.google.com/mail/?view=cm&fs=1&to=kunalsaraswat30@gmail.com&su=Linux Kernel Tool Feedback! 🐧&body=Hey Kunal,%0D%0A%0D%0ALove your Linux Kernel Tool tool! Here's my 2 cents:%0D%0A%0D%0A🌟 What's awesome:%0D%0A💡 Ideas to improve:%0D%0A🐛 Bugs I noticed:%0D%0A%0D%0ACheers,%0D%0A[Your Name]"
+                target="_blank"
+                class="text-gray-300 hover:text-white transition"
+            >
+                🐧 Help Improve This Tool
+            </a>
+        </p>
+    </div>
+<body class="bg-gray-900 text-gray-200 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+
+        <header class="mb-10 text-center">
+            <h1 class="text-5xl font-bold text-blue-400 mb-4">Linux Kernel Master Tool by Kunal Saraswat</h1>
+            <p class="text-xl text-gray-400">A comprehensive guide to understanding the Linux Kernel architecture, subsystems, and development</p>
+        </header>
+
+<!-- Improved Horizontal Tabs -->
+<div class="flex overflow-x-auto space-x-2 pb-2 border-b border-gray-700 mb-8 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
+  <button class="tab-btn active px-4 py-2 text-sm font-semibold rounded-full bg-blue-600 text-white" data-tab="overview">Overview</button>
+  <button class="tab-btn px-4 py-2 text-sm font-medium rounded-full text-gray-300 hover:bg-gray-700" data-tab="architecture">Architecture</button>
+
+  <!-- Added Kernel Boot Process early since it relates to startup -->
+  <button class="tab-btn px-4 py-2 text-sm font-medium rounded-full text-gray-300 hover:bg-gray-700" data-tab="boot-process">Kernel Boot Process</button>
+
+  <button class="tab-btn px-4 py-2 text-sm font-medium rounded-full text-gray-300 hover:bg-gray-700" data-tab="process">Process Management</button>
+
+  <!-- Added Kernel Scheduling & Real-Time Kernels after Process Management -->
+  <button class="tab-btn px-4 py-2 text-sm font-medium rounded-full text-gray-300 hover:bg-gray-700" data-tab="scheduling">Kernel Scheduling & Real-Time Kernels</button>
+
+  <button class="tab-btn px-4 py-2 text-sm font-medium rounded-full text-gray-300 hover:bg-gray-700" data-tab="memory">Memory Management</button>
+  <button class="tab-btn px-4 py-2 text-sm font-medium rounded-full text-gray-300 hover:bg-gray-700" data-tab="filesystem">Filesystems</button>
+  <button class="tab-btn px-4 py-2 text-sm font-medium rounded-full text-gray-300 hover:bg-gray-700" data-tab="device">Device Drivers</button>
+  <button class="tab-btn px-4 py-2 text-sm font-medium rounded-full text-gray-300 hover:bg-gray-700" data-tab="networking">Networking</button>
+  <button class="tab-btn px-4 py-2 text-sm font-medium rounded-full text-gray-300 hover:bg-gray-700" data-tab="modules">Kernel Modules</button>
+
+  <!-- Added Kernel Debugging Tools near Development -->
+  <button class="tab-btn px-4 py-2 text-sm font-medium rounded-full text-gray-300 hover:bg-gray-700" data-tab="debugging">Kernel Debugging Tools</button>
+
+  <button class="tab-btn px-4 py-2 text-sm font-medium rounded-full text-gray-300 hover:bg-gray-700" data-tab="development">Development</button>
+</div>
+
+
+        <!-- Tab Contents -->
+        <div class="tab-content active" id="overview">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        <!-- What is Linux Kernel Card -->
+        <div class="bg-gray-900 rounded-2xl p-8 shadow-2xl card-hover transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+            <div class="flex items-center mb-6">
+                <div class="bg-blue-600 p-3 rounded-lg mr-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                </div>
+                <h2 class="text-3xl font-extrabold text-blue-400">What is the Linux Kernel?</h2>
+            </div>
+            <p class="text-gray-300 mb-6 leading-relaxed">
+                The Linux kernel is the heart of the Linux operating system, serving as the intermediary between hardware and user applications. It manages critical resources like CPU, memory, and I/O devices, enforces security policies, and provides a robust platform for running processes. Developed by Linus Torvalds in 1991, it’s now maintained by a global community and powers everything from smartphones to supercomputers.
+            </p>
+            <div class="bg-gray-800 p-6 rounded-xl shadow-inner mb-6">
+                <p class="font-mono text-sm text-green-300">$ uname -r</p>
+                <p class="text-gray-400 text-xs mt-2">Displays the current kernel version, e.g., <code>6.9.5</code></p>
+                <p class="font-mono text-sm text-green-300 mt-4">$ lscpu | grep "Model name"</p>
+                <p class="text-gray-400 text-xs mt-2">Shows CPU details managed by the kernel</p>
+            </div>
+            <p class="text-gray-300 leading-relaxed">
+                The kernel operates in a monolithic yet modular architecture. All core functions (e.g., scheduling, file systems) run in kernel space for efficiency, but modules like drivers can be dynamically loaded or unloaded, enhancing flexibility. For example, loading a USB driver doesn’t require a kernel rebuild.
+            </p>
+        </div>
+
+        <!-- Key Features Card -->
+        <div class="bg-gray-900 rounded-2xl p-8 shadow-2xl card-hover transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+            <div class="flex items-center mb-6">
+                <div class="bg-purple-600 p-3 rounded-lg mr-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+                <h2 class="text-3xl font-extrabold text-purple-400">Key Features</h2>
+            </div>
+            <ul class="list-disc list-inside text-gray-300 space-y-3">
+                <li><span class="font-semibold">Preemptive Multitasking:</span> Enables efficient CPU time-sharing with the Completely Fair Scheduler (CFS).</li>
+                <li><span class="font-semibold">Multi-user Support:</span> Allows multiple users to run isolated sessions concurrently, ideal for servers.</li>
+                <li><span class="font-semibold">Protected Memory:</span> Ensures process isolation, preventing unauthorized memory access.</li>
+                <li><span class="font-semibold">Virtual Memory:</span> Uses paging and swapping to manage memory efficiently, supporting large address spaces.</li>
+                <li><span class="font-semibold">Dynamic Modules:</span> Supports loadable kernel modules (e.g., <code>ext4</code> filesystem) for extensibility.</li>
+                <li><span class="font-semibold">Symmetric Multiprocessing (SMP):</span> Scales across multiple CPU cores for high performance.</li>
+                <li><span class="font-semibold">Robust Networking:</span> Implements advanced protocols like TCP/IP and netfilter for firewalls.</li>
+            </ul>
+            <div class="bg-gray-800 p-6 rounded-xl shadow-inner mt-6">
+                <p class="font-mono text-sm text-green-300">$ cat /proc/cpuinfo | grep "cpu cores"</p>
+                <p class="text-gray-400 text-xs mt-2">Displays the number of CPU cores supported by SMP</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kernel Version Info -->
+    <div class="bg-gray-900 rounded-2xl p-8 shadow-2xl mb-12">
+        <h2 class="text-3xl font-extrabold mb-6 flex items-center text-yellow-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-3 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+            </svg>
+            Kernel Version Information
+        </h2>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="bg-gray-800 p-6 rounded-xl shadow-inner">
+                <h3 class="font-semibold text-blue-300 mb-3 text-xl">Version Numbering</h3>
+                <p class="text-gray-300 text-sm leading-relaxed">
+                    Linux kernel versions follow the format: <br>
+                    <span class="font-mono text-green-300">X.Y.Z</span><br>
+                    - <span class="font-semibold">X:</span> Major version, incremented for significant changes.<br>
+                    - <span class="font-semibold">Y:</span> Minor version (even numbers indicate stable releases, odd for development).<br>
+                    - <span class="font-semibold">Z:</span> Patch level, incremented for bug fixes and minor updates.
+                </p>
+                <p class="text-gray-400 text-xs mt-3">Example: <code>6.9.5</code> is the 5th patch of the 6.9 stable series.</p>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-xl shadow-inner">
+                <h3 class="font-semibold text-blue-300 mb-3 text-xl">Current Stable</h3>
+                <p class="text-gray-300">
+                    As of May 2025: <span class="font-mono text-green-300">6.9.5</span>
+                </p>
+                <p class="text-gray-300 text-sm mt-3 leading-relaxed">
+                    Released: May 2025<br>
+                    ~22 million lines of code<br>
+                    Includes Rust support for drivers, enhanced Btrfs, and improved ARM64 performance.
+                </p>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-xl shadow-inner">
+                <h3 class="font-semibold text-blue-300 mb-3 text-xl">Long-Term Support</h3>
+                <p class="text-gray-300 text-sm leading-relaxed">
+                    LTS versions (supported for 6+ years):<br>
+                    <span class="font-mono text-yellow-300">6.6.x</span>, <span class="font-mono text-yellow-300">6.1.x</span>, <span class="font-mono text-yellow-300">5.15.x</span><br>
+                    Used in enterprise systems and IoT devices for stability.
+                </p>
+                <p class="text-gray-400 text-xs mt-3">Check LTS status: <code>kernel.org</code></p>
+            </div>
+        </div>
+        <!-- Version Timeline -->
+        <div class="mt-8">
+            <h3 class="text-xl font-semibold mb-4 text-green-300">Version Timeline</h3>
+            <svg class="w-full h-24" viewBox="0 0 600 100" xmlns="http://www.w3.org/2000/svg">
+                <line x1="50" y1="50" x2="550" y2="50" stroke="#6b7280" stroke-width="2"/>
+                <circle cx="50" cy="50" r="6" fill="#3b82f6"/>
+                <text x="50" y="80" text-anchor="middle" fill="#d1d5db" font-size="12">1991: 0.01</text>
+                <circle cx="200" cy="50" r="6" fill="#3b82f6"/>
+                <text x="200" y="80" text-anchor="middle" fill="#d1d5db" font-size="12">2003: 2.6</text>
+                <circle cx="350" cy="50" r="6" fill="#3b82f6"/>
+                <text x="350" y="80" text-anchor="middle" fill="#d1d5db" font-size="12">2011: 3.0</text>
+                <circle cx="500" cy="50" r="6" fill="#3b82f6"/>
+                <text x="500" y="80" text-anchor="middle" fill="#d1d5db" font-size="12">2025: 6.9</text>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Getting Started -->
+    <div class="bg-gray-900 rounded-2xl p-8 shadow-2xl">
+        <h2 class="text-3xl font-extrabold mb-6 text-yellow-400">Getting Started with the Kernel</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div>
+                <h3 class="text-xl font-semibold mb-4 text-green-300">Essential Commands</h3>
+                <div class="space-y-4">
+                    <div class="bg-gray-800 p-4 rounded-xl shadow-inner">
+                        <p class="font-mono text-sm text-green-300">$ cat /proc/version</p>
+                        <p class="text-gray-400 text-xs mt-2">Displays kernel version, compiler, and build timestamp.</p>
+                    </div>
+                    <div class="bg-gray-800 p-4 rounded-xl shadow-inner">
+                        <p class="font-mono text-sm text-green-300">$ dmesg | grep -i error</p>
+                        <p class="text-gray-400 text-xs mt-2">Filters kernel ring buffer for error messages to diagnose issues.</p>
+                    </div>
+                    <div class="bg-gray-800 p-4 rounded-xl shadow-inner">
+                        <p class="font-mono text-sm text-green-300">$ lsmod | grep usb</p>
+                        <p class="text-gray-400 text-xs mt-2">Lists loaded USB-related kernel modules.</p>
+                    </div>
+                    <div class="bg-gray-800 p-4 rounded-xl shadow-inner">
+                        <p class="font-mono text-sm text-green-300">$ modinfo snd_hda_intel</p>
+                        <p class="text-gray-400 text-xs mt-2">Shows details about the Intel HDA audio module, e.g., version and parameters.</p>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <h3 class="text-xl font-semibold mb-4 text-green-300">Kernel Sources</h3>
+                <p class="text-gray-300 mb-6 leading-relaxed">
+                    The Linux kernel source code is open-source, hosted on <a href="https://kernel.org" class="text-blue-400 hover:underline">kernel.org</a> and Git repositories. Developers can study, modify, or contribute to it. The source includes extensive documentation and tools for building custom kernels.
+                </p>
+                <div class="bg-gray-800 p-6 rounded-xl shadow-inner mb-6">
+                    <p class="font-mono text-sm text-green-300">$ git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git</p>
+                    <p class="text-gray-400 text-xs mt-2">Clones Linus Torvalds’ mainline kernel repository.</p>
+                    <p class="font-mono text-sm text-green-300 mt-4">$ cd linux && make menuconfig</p>
+                    <p class="text-gray-400 text-xs mt-2">Opens the kernel configuration menu for custom builds.</p>
+                </div>
+                <p class="text-gray-300 text-sm leading-relaxed">
+                    Source code is typically installed in <span class="font-mono">/usr/src/linux</span>. The <span class="font-mono">Documentation/</span> directory contains guides, such as <span class="font-mono">admin-guide/</span> for system administrators and <span class="font-mono">kernel-hacking/</span> for developers.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+        <!-- Architecture Tab -->
+        <div class="tab-content" id="architecture">
+    <div class="bg-gray-900 rounded-2xl p-8 shadow-2xl mb-12">
+        <h2 class="text-4xl font-extrabold mb-8 text-blue-400 tracking-tight">Linux Kernel Architecture</h2>
+
+        <!-- Enhanced User Space vs Kernel Space Diagram -->
+        <div class="kernel-diagram mb-12">
+            <h3 class="text-2xl font-semibold mb-6 text-center text-green-300">Complete System Architecture: User Space ↔ Kernel Space</h3>
+            <div class="flex justify-center">
+                <svg class="w-full max-w-4xl" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+                    <!-- User Space -->
+                    <rect x="50" y="20" width="700" height="120" rx="15" fill="url(#userSpaceGradient)" stroke="#3b82f6" stroke-width="3"/>
+                    <text x="400" y="50" text-anchor="middle" fill="#ffffff" font-size="20" font-weight="bold">USER SPACE (Ring 3)</text>
+
+                    <!-- User Applications -->
+                    <g transform="translate(80, 65)">
+                        <rect x="0" y="0" width="100" height="40" rx="8" fill="#1e40af" stroke="#3b82f6" stroke-width="2"/>
+                        <text x="50" y="25" text-anchor="middle" fill="#bfdbfe" font-size="12">Applications</text>
+                    </g>
+                    <g transform="translate(200, 65)">
+                        <rect x="0" y="0" width="100" height="40" rx="8" fill="#1e40af" stroke="#3b82f6" stroke-width="2"/>
+                        <text x="50" y="25" text-anchor="middle" fill="#bfdbfe" font-size="12">Libraries</text>
+                    </g>
+                    <g transform="translate(320, 65)">
+                        <rect x="0" y="0" width="100" height="40" rx="8" fill="#1e40af" stroke="#3b82f6" stroke-width="2"/>
+                        <text x="50" y="25" text-anchor="middle" fill="#bfdbfe" font-size="12">Shell</text>
+                    </g>
+                    <g transform="translate(440, 65)">
+                        <rect x="0" y="0" width="100" height="40" rx="8" fill="#1e40af" stroke="#3b82f6" stroke-width="2"/>
+                        <text x="50" y="25" text-anchor="middle" fill="#bfdbfe" font-size="12">Processes</text>
+                    </g>
+                    <g transform="translate(560, 65)">
+                        <rect x="0" y="0" width="100" height="40" rx="8" fill="#1e40af" stroke="#3b82f6" stroke-width="2"/>
+                        <text x="50" y="25" text-anchor="middle" fill="#bfdbfe" font-size="12">Daemons</text>
+                    </g>
+
+                    <!-- System Call Interface -->
+                    <rect x="50" y="160" width="700" height="50" rx="12" fill="url(#syscallGradient)" stroke="#a78bfa" stroke-width="3"/>
+                    <text x="400" y="190" text-anchor="middle" fill="#ffffff" font-size="18" font-weight="bold">SYSTEM CALL INTERFACE</text>
+                    <text x="400" y="205" text-anchor="middle" fill="#ddd6fe" font-size="12">syscall(), sysenter, int 0x80</text>
+
+                    <!-- Kernel Space -->
+                    <rect x="50" y="230" width="700" height="280" rx="15" fill="url(#kernelSpaceGradient)" stroke="#dc2626" stroke-width="3"/>
+                    <text x="400" y="260" text-anchor="middle" fill="#ffffff" font-size="20" font-weight="bold">KERNEL SPACE (Ring 0)</text>
+
+                    <!-- Kernel Subsystems - Top Row -->
+                    <g transform="translate(80, 280)">
+                        <rect x="0" y="0" width="140" height="60" rx="8" fill="#7c2d12" stroke="#dc2626" stroke-width="2" class="hover:fill-red-700 transition-colors duration-200"/>
+                        <text x="70" y="25" text-anchor="middle" fill="#fecaca" font-size="11" font-weight="bold">Process</text>
+                        <text x="70" y="38" text-anchor="middle" fill="#fecaca" font-size="11" font-weight="bold">Management</text>
+                        <text x="70" y="50" text-anchor="middle" fill="#fee2e2" font-size="9">CFS Scheduler</text>
+                        <title>Handles process creation, scheduling (CFS), and termination. Manages task_struct</title>
+                    </g>
+                    <g transform="translate(240, 280)">
+                        <rect x="0" y="0" width="140" height="60" rx="8" fill="#7c2d12" stroke="#dc2626" stroke-width="2" class="hover:fill-red-700 transition-colors duration-200"/>
+                        <text x="70" y="25" text-anchor="middle" fill="#fecaca" font-size="11" font-weight="bold">Memory</text>
+                        <text x="70" y="38" text-anchor="middle" fill="#fecaca" font-size="11" font-weight="bold">Management</text>
+                        <text x="70" y="50" text-anchor="middle" fill="#fee2e2" font-size="9">VMM, Paging</text>
+                        <title>Virtual memory, page allocation, swapping, NUMA support</title>
+                    </g>
+                    <g transform="translate(400, 280)">
+                        <rect x="0" y="0" width="140" height="60" rx="8" fill="#7c2d12" stroke="#dc2626" stroke-width="2" class="hover:fill-red-700 transition-colors duration-200"/>
+                        <text x="70" y="25" text-anchor="middle" fill="#fecaca" font-size="11" font-weight="bold">Virtual</text>
+                        <text x="70" y="38" text-anchor="middle" fill="#fecaca" font-size="11" font-weight="bold">Filesystem</text>
+                        <text x="70" y="50" text-anchor="middle" fill="#fee2e2" font-size="9">VFS Layer</text>
+                        <title>Unified interface for ext4, Btrfs, NTFS, etc.</title>
+                    </g>
+                    <g transform="translate(560, 280)">
+                        <rect x="0" y="0" width="140" height="60" rx="8" fill="#7c2d12" stroke="#dc2626" stroke-width="2" class="hover:fill-red-700 transition-colors duration-200"/>
+                        <text x="70" y="25" text-anchor="middle" fill="#fecaca" font-size="11" font-weight="bold">Network</text>
+                        <text x="70" y="38" text-anchor="middle" fill="#fecaca" font-size="11" font-weight="bold">Stack</text>
+                        <text x="70" y="50" text-anchor="middle" fill="#fee2e2" font-size="9">TCP/IP, Netfilter</text>
+                        <title>TCP/IP stack, sockets, netfilter framework</title>
+                    </g>
+
+                    <!-- Kernel Subsystems - Bottom Row -->
+                    <g transform="translate(80, 360)">
+                        <rect x="0" y="0" width="140" height="60" rx="8" fill="#7c2d12" stroke="#dc2626" stroke-width="2" class="hover:fill-red-700 transition-colors duration-200"/>
+                        <text x="70" y="25" text-anchor="middle" fill="#fecaca" font-size="11" font-weight="bold">Device</text>
+                        <text x="70" y="38" text-anchor="middle" fill="#fecaca" font-size="11" font-weight="bold">Drivers</text>
+                        <text x="70" y="50" text-anchor="middle" fill="#fee2e2" font-size="9">Block, Char, Net</text>
+                        <title>Hardware abstraction layer for all devices</title>
+                    </g>
+                    <g transform="translate(240, 360)">
+                        <rect x="0" y="0" width="140" height="60" rx="8" fill="#7c2d12" stroke="#dc2626" stroke-width="2" class="hover:fill-red-700 transition-colors duration-200"/>
+                        <text x="70" y="25" text-anchor="middle" fill="#fecaca" font-size="11" font-weight="bold">Security</text>
+                        <text x="70" y="38" text-anchor="middle" fill="#fecaca" font-size="11" font-weight="bold">Modules</text>
+                        <text x="70" y="50" text-anchor="middle" fill="#fee2e2" font-size="9">SELinux, LSM</text>
+                        <title>SELinux, AppArmor, capabilities framework</title>
+                    </g>
+                    <g transform="translate(400, 360)">
+                        <rect x="0" y="0" width="140" height="60" rx="8" fill="#7c2d12" stroke="#dc2626" stroke-width="2" class="hover:fill-red-700 transition-colors duration-200"/>
+                        <text x="70" y="25" text-anchor="middle" fill="#fecaca" font-size="11" font-weight="bold">Interrupt</text>
+                        <text x="70" y="38" text-anchor="middle" fill="#fecaca" font-size="11" font-weight="bold">Handling</text>
+                        <text x="70" y="50" text-anchor="middle" fill="#fee2e2" font-size="9">IRQ, Softirq</text>
+                        <title>Hardware and software interrupt management</title>
+                    </g>
+                    <g transform="translate(560, 360)">
+                        <rect x="0" y="0" width="140" height="60" rx="8" fill="#7c2d12" stroke="#dc2626" stroke-width="2" class="hover:fill-red-700 transition-colors duration-200"/>
+                        <text x="70" y="25" text-anchor="middle" fill="#fecaca" font-size="11" font-weight="bold">IPC</text>
+                        <text x="70" y="38" text-anchor="middle" fill="#fecaca" font-size="11" font-weight="bold">Mechanisms</text>
+                        <text x="70" y="50" text-anchor="middle" fill="#fee2e2" font-size="9">Pipes, Sockets</text>
+                        <title>Inter-process communication: pipes, shared memory, signals</title>
+                    </g>
+
+                    <!-- Hardware Layer -->
+                    <rect x="50" y="530" width="700" height="60" rx="12" fill="url(#hardwareGradient)" stroke="#6b7280" stroke-width="3"/>
+                    <text x="400" y="565" text-anchor="middle" fill="#ffffff" font-size="18" font-weight="bold">HARDWARE LAYER</text>
+                    <text x="200" y="580" text-anchor="middle" fill="#d1d5db" font-size="12">CPU</text>
+                    <text x="300" y="580" text-anchor="middle" fill="#d1d5db" font-size="12">Memory</text>
+                    <text x="400" y="580" text-anchor="middle" fill="#d1d5db" font-size="12">Storage</text>
+                    <text x="500" y="580" text-anchor="middle" fill="#d1d5db" font-size="12">Network</text>
+                    <text x="600" y="580" text-anchor="middle" fill="#d1d5db" font-size="12">Peripherals</text>
+
+                    <!-- Privilege Level Indicators -->
+                    <text x="30" y="80" text-anchor="middle" fill="#3b82f6" font-size="14" font-weight="bold" transform="rotate(-90 30 80)">Ring 3</text>
+                    <text x="30" y="370" text-anchor="middle" fill="#dc2626" font-size="14" font-weight="bold" transform="rotate(-90 30 370)">Ring 0</text>
+
+                    <!-- Arrows showing data flow -->
+                    <path d="M400 140 L400 160" fill="none" stroke="#a78bfa" stroke-width="3" marker-end="url(#arrow)"/>
+                    <path d="M400 210 L400 230" fill="none" stroke="#dc2626" stroke-width="3" marker-end="url(#arrow)"/>
+                    <path d="M400 510 L400 530" fill="none" stroke="#6b7280" stroke-width="3" marker-end="url(#arrow)"/>
+
+                    <!-- Return arrows -->
+                    <path d="M420 160 L420 140" fill="none" stroke="#34d399" stroke-width="2" marker-end="url(#returnArrow)"/>
+                    <path d="M420 230 L420 210" fill="none" stroke="#34d399" stroke-width="2" marker-end="url(#returnArrow)"/>
+
+                    <!-- Gradients and markers -->
+                    <defs>
+                        <linearGradient id="userSpaceGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#1e40af;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+                        </linearGradient>
+                        <linearGradient id="kernelSpaceGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#7c2d12;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#dc2626;stop-opacity:1" />
+                        </linearGradient>
+                        <linearGradient id="syscallGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#4c1d95;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#a78bfa;stop-opacity:1" />
+                        </linearGradient>
+                        <linearGradient id="hardwareGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#374151;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#6b7280;stop-opacity:1" />
+                        </linearGradient>
+                        <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#a78bfa"/>
+                        </marker>
+                        <marker id="returnArrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#34d399"/>
+                        </marker>
+                    </defs>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Add this after the architecture diagram section -->
+<div class="mt-12">
+    <h3 class="text-2xl font-semibold mb-6 text-purple-300">Theoretical Foundations: Kernel Space vs User Space</h3>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="bg-gray-800 p-6 rounded-xl shadow-inner">
+            <h4 class="font-semibold mb-4 text-blue-300">User Space (Ring 3)</h4>
+            <p class="text-gray-300 mb-4 leading-relaxed">
+                User space is the execution environment where all regular applications operate. It provides:
+            </p>
+            <ul class="text-gray-300 space-y-2 text-sm">
+                <li><span class="text-blue-400">•</span> <strong>Process Isolation:</strong> Each process runs in its own virtual address space</li>
+                <li><span class="text-blue-400">•</span> <strong>Restricted Access:</strong> Cannot directly access hardware or kernel memory</li>
+                <li><span class="text-blue-400">•</span> <strong>System Call Interface:</strong> Only way to request kernel services via well-defined APIs</li>
+                <li><span class="text-blue-400">•</span> <strong>Context Switching:</strong> Requires mode transition (expensive operation)</li>
+                <li><span class="text-blue-400">•</span> <strong>Memory Protection:</strong> Hardware-enforced via MMU and page tables</li>
+            </ul>
+            <div class="mt-4 p-4 bg-gray-700 rounded-lg">
+                <p class="font-mono text-sm text-gray-200">$ strace ls</p>
+                <p class="text-gray-400 text-xs mt-1">Observe system calls made by user processes</p>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 p-6 rounded-xl shadow-inner">
+            <h4 class="font-semibold mb-4 text-red-300">Kernel Space (Ring 0)</h4>
+            <p class="text-gray-300 mb-4 leading-relaxed">
+                The kernel space is the privileged core of the operating system with:
+            </p>
+            <ul class="text-gray-300 space-y-2 text-sm">
+                <li><span class="text-red-400">•</span> <strong>Full Hardware Access:</strong> Direct control over CPU, memory, and devices</li>
+                <li><span class="text-red-400">•</span> <strong>Single Address Space:</strong> All kernel code/data shares one memory space</li>
+                <li><span class="text-red-400">•</span> <strong>Critical Operations:</strong> Manages interrupts, scheduling, memory allocation</li>
+                <li><span class="text-red-400">•</span> <strong>No Memory Protection:</strong> Any kernel code can access any kernel memory</li>
+                <li><span class="text-red-400">•</span> <strong>Preemption:</strong> Modern kernels support kernel preemption for responsiveness</li>
+            </ul>
+            <div class="mt-4 p-4 bg-gray-700 rounded-lg">
+                <p class="font-mono text-sm text-gray-200">$ cat /proc/kallsyms | head -20</p>
+                <p class="text-gray-400 text-xs mt-1">View kernel symbol table (requires root)</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-8 bg-gray-800 p-6 rounded-xl shadow-inner">
+        <h4 class="font-semibold mb-4 text-yellow-300">Transition Mechanisms</h4>
+        <p class="text-gray-300 mb-4 leading-relaxed">
+            User and kernel spaces communicate through carefully controlled interfaces:
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-gray-750 p-4 rounded-lg">
+                <h5 class="font-semibold text-green-300 mb-2">System Calls</h5>
+                <p class="text-gray-300 text-xs">
+                    Software interrupts (int 0x80/syscall) that trigger mode switches. Linux has ~400 syscalls (x86_64).
+                </p>
+            </div>
+            <div class="bg-gray-750 p-4 rounded-lg">
+                <h5 class="font-semibold text-purple-300 mb-2">Virtual Filesystem</h5>
+                <p class="text-gray-300 text-xs">
+                    /proc, /sys provide kernel data structures as files. Enables inspection without direct access.
+                </p>
+            </div>
+            <div class="bg-gray-750 p-4 rounded-lg">
+                <h5 class="font-semibold text-blue-300 mb-2">Memory Mapping</h5>
+                <p class="text-gray-300 text-xs">
+                    mmap() allows controlled sharing of kernel buffers with user space (DMA, graphics).
+                </p>
+            </div>
+        </div>
+
+        <div class="mt-6">
+            <h5 class="font-semibold text-orange-300 mb-3">Security Implications</h5>
+            <ul class="text-gray-300 space-y-2 text-sm">
+                <li><span class="text-orange-400">•</span> Kernel exploits are catastrophic (full system compromise)</li>
+                <li><span class="text-orange-400">•</span> User processes are isolated (one crashing doesn't affect others)</li>
+                <li><span class="text-orange-400">•</span> Modern protections: KASLR, SMAP, SMEP, SELinux</li>
+            </ul>
+        </div>
+    </div>
+</div>
+        <!-- Detailed Subsystem Information -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div>
+                <h3 class="text-2xl font-semibold mb-4 text-yellow-300">Kernel Space vs User Space</h3>
+                <p class="text-gray-300 mb-6 leading-relaxed">
+                    The Linux kernel operates in a privileged execution mode (Ring 0) with direct hardware access, while user applications run in Ring 3 with restricted privileges. This separation ensures system stability and security through hardware-enforced protection.
+                </p>
+                <div class="bg-gray-800 p-6 rounded-xl shadow-inner mb-6">
+                    <h4 class="font-semibold mb-3 text-blue-300">Key Differences:</h4>
+                    <ul class="text-gray-300 space-y-2 text-sm">
+                        <li><span class="text-blue-400">•</span> <strong>Memory Access:</strong> Kernel can access all memory; user space has virtual memory isolation</li>
+                        <li><span class="text-red-400">•</span> <strong>Privileges:</strong> Kernel has CPU Ring 0; user space restricted to Ring 3</li>
+                        <li><span class="text-green-400">•</span> <strong>Hardware:</strong> Direct hardware access vs. system call interface</li>
+                        <li><span class="text-yellow-400">•</span> <strong>Context Switch:</strong> Mode switching requires CPU overhead (~100-1000 cycles)</li>
+                    </ul>
+                </div>
+                <div class="bg-gray-800 p-6 rounded-xl shadow-inner mb-6">
+                    <p class="font-mono text-sm text-gray-200">$ cat /proc/meminfo | grep -E "(MemTotal|MemFree)"</p>
+                    <p class="text-gray-400 text-xs mt-2">View system memory allocation</p>
+                    <p class="font-mono text-sm text-gray-200 mt-4">$ sudo dmesg | grep -i "memory"</p>
+                    <p class="text-gray-400 text-xs mt-2">Check kernel memory management logs</p>
+                </div>
+            </div>
+            <div>
+                <h3 class="text-2xl font-semibold mb-4 text-yellow-300">Core Subsystems Interaction</h3>
+                <ul class="list-disc list-inside text-gray-300 space-y-3">
+                    <li><span class="font-semibold text-blue-400">System Call Interface:</span> Provides controlled entry points (syscall table with 400+ entries) for user-kernel transitions.</li>
+                    <li><span class="font-semibold text-red-400">Process Management:</span> CFS scheduler with O(log n) complexity, load balancing across CPU cores, task_struct contains 1000+ fields.</li>
+                    <li><span class="font-semibold text-green-400">Memory Management:</span> 4-level page tables on x86_64, demand paging, copy-on-write, NUMA-aware allocation.</li>
+                    <li><span class="font-semibold text-purple-400">Virtual Filesystem:</span> Unified API supporting 50+ filesystem types, dentries cache for path lookups.</li>
+                    <li><span class="font-semibold text-cyan-400">Network Stack:</span> Layer 3-7 protocol handling, socket buffers (sk_buff), traffic control subsystem.</li>
+                    <li><span class="font-semibold text-orange-400">Device Drivers:</span> Character, block, network device classes with standardized interfaces.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- System Call Workflow -->
+        <div class="mt-12">
+            <h3 class="text-2xl font-semibold mb-6 text-green-300">System Call Execution Flow</h3>
+            <p class="text-gray-300 mb-6 leading-relaxed">
+                System calls provide the only legitimate way for user programs to request kernel services. The process involves privilege escalation, parameter validation, service execution, and safe return to user mode.
+            </p>
+
+            <!-- System Call Flow Diagram -->
+            <div class="flex justify-center mb-8">
+                <svg class="w-full max-w-5xl" viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Steps -->
+                    <g transform="translate(50, 50)">
+                        <circle cx="50" cy="50" r="30" fill="#1e40af" stroke="#3b82f6" stroke-width="3"/>
+                        <text x="50" y="57" text-anchor="middle" fill="white" font-size="16" font-weight="bold">1</text>
+                        <text x="50" y="100" text-anchor="middle" fill="#bfdbfe" font-size="12">User calls</text>
+                        <text x="50" y="115" text-anchor="middle" fill="#bfdbfe" font-size="12">library function</text>
+                    </g>
+
+                    <g transform="translate(180, 50)">
+                        <circle cx="50" cy="50" r="30" fill="#7c2d12" stroke="#dc2626" stroke-width="3"/>
+                        <text x="50" y="57" text-anchor="middle" fill="white" font-size="16" font-weight="bold">2</text>
+                        <text x="50" y="100" text-anchor="middle" fill="#fecaca" font-size="12">Software interrupt</text>
+                        <text x="50" y="115" text-anchor="middle" fill="#fecaca" font-size="12">(syscall instruction)</text>
+                    </g>
+
+                    <g transform="translate(310, 50)">
+                        <circle cx="50" cy="50" r="30" fill="#7c2d12" stroke="#dc2626" stroke-width="3"/>
+                        <text x="50" y="57" text-anchor="middle" fill="white" font-size="16" font-weight="bold">3</text>
+                        <text x="50" y="100" text-anchor="middle" fill="#fecaca" font-size="12">Mode switch</text>
+                        <text x="50" y="115" text-anchor="middle" fill="#fecaca" font-size="12">Ring 3 → Ring 0</text>
+                    </g>
+
+                    <g transform="translate(440, 50)">
+                        <circle cx="50" cy="50" r="30" fill="#7c2d12" stroke="#dc2626" stroke-width="3"/>
+                        <text x="50" y="57" text-anchor="middle" fill="white" font-size="16" font-weight="bold">4</text>
+                        <text x="50" y="100" text-anchor="middle" fill="#fecaca" font-size="12">Parameter</text>
+                        <text x="50" y="115" text-anchor="middle" fill="#fecaca" font-size="12">validation</text>
+                    </g>
+
+                    <g transform="translate(570, 50)">
+                        <circle cx="50" cy="50" r="30" fill="#7c2d12" stroke="#dc2626" stroke-width="3"/>
+                        <text x="50" y="57" text-anchor="middle" fill="white" font-size="16" font-weight="bold">5</text>
+                        <text x="50" y="100" text-anchor="middle" fill="#fecaca" font-size="12">Execute</text>
+                        <text x="50" y="115" text-anchor="middle" fill="#fecaca" font-size="12">kernel service</text>
+                    </g>
+
+                    <g transform="translate(700, 50)">
+                        <circle cx="50" cy="50" r="30" fill="#1e40af" stroke="#3b82f6" stroke-width="3"/>
+                        <text x="50" y="57" text-anchor="middle" fill="white" font-size="16" font-weight="bold">6</text>
+                        <text x="50" y="100" text-anchor="middle" fill="#bfdbfe" font-size="12">Return to</text>
+                        <text x="50" y="115" text-anchor="middle" fill="#bfdbfe" font-size="12">user mode</text>
+                    </g>
+
+                    <!-- Arrows -->
+                    <path d="M130 100 L160 100" fill="none" stroke="#6b7280" stroke-width="3" marker-end="url(#flowArrow)"/>
+                    <path d="M260 100 L290 100" fill="none" stroke="#6b7280" stroke-width="3" marker-end="url(#flowArrow)"/>
+                    <path d="M390 100 L420 100" fill="none" stroke="#6b7280" stroke-width="3" marker-end="url(#flowArrow)"/>
+                    <path d="M520 100 L550 100" fill="none" stroke="#6b7280" stroke-width="3" marker-end="url(#flowArrow)"/>
+                    <path d="M650 100 L680 100" fill="none" stroke="#6b7280" stroke-width="3" marker-end="url(#flowArrow)"/>
+
+                    <defs>
+                        <marker id="flowArrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#6b7280"/>
+                        </marker>
+                    </defs>
+                </svg>
+            </div>
+
+            <div class="bg-gray-800 p-6 rounded-xl shadow-inner mb-6">
+                <h4 class="font-semibold mb-4 text-blue-300">Detailed System Call Process</h4>
+                <ol class="list-decimal list-inside text-gray-300 space-y-3 text-sm">
+                    <li><strong>Library Call:</strong> User invokes <code>read(fd, buf, count)</code> from glibc, which wraps the actual system call.</li>
+                    <li><strong>Syscall Instruction:</strong> CPU executes <code>syscall</code> instruction (x86_64) with syscall number in RAX register.</li>
+                    <li><strong>Mode Switch:</strong> Hardware switches to Ring 0, saves user context (registers, stack pointer) on kernel stack.</li>
+                    <li><strong>Parameter Validation:</strong> Kernel validates file descriptor, checks buffer accessibility using <code>access_ok()</code>.</li>
+                    <li><strong>Service Execution:</strong> Kernel executes <code>sys_read()</code>, may block for I/O, schedule other processes.</li>
+                    <li><strong>Return:</strong> Results copied to user buffer, registers restored, CPU returns to Ring 3 user mode.</li>
+                    <li><strong>Error Handling:</strong> Negative return values indicate errors, errno set by glibc wrapper.</li>
+                </ol>
+            </div>
+
+            <!-- System Call Tracing -->
+            <div class="bg-gray-800 p-6 rounded-xl shadow-inner">
+                <h4 class="font-semibold mb-4 text-blue-300">Advanced System Call Analysis</h4>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="bg-gray-700 p-4 rounded-lg">
+                        <p class="font-mono text-sm text-gray-200">$ strace -c -p $(pidof nginx)</p>
+                        <p class="text-gray-400 text-xs mt-2">Profile syscalls of running nginx process</p>
+                        <p class="font-mono text-sm text-gray-200 mt-3">$ perf trace -p $(pidof firefox)</p>
+                        <p class="text-gray-400 text-xs mt-2">High-performance syscall tracing</p>
+                    </div>
+                    <div class="bg-gray-700 p-4 rounded-lg">
+                        <p class="font-mono text-sm text-gray-200">$ cat /proc/sys/kernel/syscall_audit</p>
+                        <p class="text-gray-400 text-xs mt-2">Check syscall auditing status</p>
+                        <p class="font-mono text-sm text-gray-200 mt-3">$ bpftrace -e 'tracepoint:syscalls:sys_enter_* { @[probe] = count(); }'</p>
+                        <p class="text-gray-400 text-xs mt-2">eBPF-based syscall frequency analysis</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comprehensive Kernel Types Section -->
+        <div class="mt-12">
+            <h3 class="text-2xl font-semibold mb-6 text-green-300">Operating System Kernel Architectures</h3>
+            <p class="text-gray-300 mb-6 leading-relaxed">
+                Kernel architectures define how operating system services are organized and executed. Each design offers different trade-offs between performance, reliability, modularity, and complexity. Below is a comprehensive comparison including the nano kernel architecture.
+            </p>
+
+            <!-- Kernel Types Visual Comparison -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+                <!-- Monolithic Kernel -->
+                <div class="bg-gray-800 p-6 rounded-xl shadow-inner">
+                    <h4 class="font-semibold mb-4 text-red-400">Monolithic Kernel</h4>
+                    <svg class="w-full h-40 mb-4" viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="10" y="10" width="180" height="30" rx="5" fill="#1e40af" stroke="#3b82f6" stroke-width="2"/>
+                        <text x="100" y="30" text-anchor="middle" fill="white" font-size="12">User Space</text>
+
+                        <rect x="10" y="50" width="180" height="80" rx="5" fill="#7c2d12" stroke="#dc2626" stroke-width="2"/>
+                        <text x="100" y="70" text-anchor="middle" fill="white" font-size="10" font-weight="bold">KERNEL SPACE</text>
+                        <text x="50" y="85" text-anchor="middle" fill="#fecaca" font-size="8">Process Mgmt</text>
+                        <text x="150" y="85" text-anchor="middle" fill="#fecaca" font-size="8">Memory Mgmt</text>
+                        <text x="50" y="100" text-anchor="middle" fill="#fecaca" font-size="8">File System</text>
+                        <text x="150" y="100" text-anchor="middle" fill="#fecaca" font-size="8">Drivers</text>
+                        <text x="100" y="115" text-anchor="middle" fill="#fecaca" font-size="8">Network Stack</text>
+
+                        <rect x="10" y="140" width="180" height="15" rx="3" fill="#374151" stroke="#6b7280" stroke-width="1"/>
+                        <text x="100" y="150" text-anchor="middle" fill="white" font-size="10">Hardware</text>
+                    </svg>
+                    <ul class="text-xs text-gray-300 space-y-1">
+                        <li><span class="text-green-400">✓</span> High performance</li>
+                        <li><span class="text-green-400">✓</span> Direct function calls</li>
+                        <li><span class="text-red-400">✗</span> Large codebase</li>
+                        <li><span class="text-red-400">✗</span> Single point of failure</li>
+                    </ul>
+                </div>
+
+                <!-- Microkernel -->
+                <div class="bg-gray-800 p-6 rounded-xl shadow-inner">
+                    <h4 class="font-semibold mb-4 text-blue-400">Microkernel</h4>
+                    <svg class="w-full h-40 mb-4" viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="10" y="10" width="180" height="50" rx="5" fill="#1e40af" stroke="#3b82f6" stroke-width="2"/>
+                        <text x="100" y="25" text-anchor="middle" fill="white" font-size="10" font-weight="bold">USER SPACE</text>
+                        <text x="40" y="40" text-anchor="middle" fill="#bfdbfe" font-size="8">File Server</text>
+                        <text x="100" y="40" text-anchor="middle" fill="#bfdbfe" font-size="8">Drivers</text>
+                        <text x="160" y="40" text-anchor="middle" fill="#bfdbfe" font-size="8">Network</text>
+                        <text x="40" y="50" text-anchor="middle" fill="#bfdbfe" font-size="8">Process Mgr</text>
+                        <text x="160" y="50" text-anchor="middle" fill="#bfdbfe" font-size="8">Memory Mgr</text>
+
+                        <rect x="10" y="70" width="180" height="35" rx="5" fill="#059669" stroke="#10b981" stroke-width="2"/>
+                        <text x="100" y="85" text-anchor="middle" fill="white" font-size="10" font-weight="bold">MICROKERNEL</text>
+                        <text x="100" y="97" text-anchor="middle" fill="#d1fae5" font-size="8">IPC + Scheduling + Basic MM</text>
+
+                        <rect x="10" y="115" width="180" height="15" rx="3" fill="#374151" stroke="#6b7280" stroke-width="1"/>
+                        <text x="100" y="125" text-anchor="middle" fill="white" font-size="10">Hardware</text>
+
+                        <!-- IPC arrows -->
+                        <path d="M60 60 L60 70" fill="none" stroke="#10b981" stroke-width="1" marker-end="url(#microArrow)"/>
+                        <path d="M140 60 L140 70" fill="none" stroke="#10b981" stroke-width="1" marker-end="url(#microArrow)"/>
+                    </svg>
+                    <ul class="text-xs text-gray-300 space-y-1">
+                        <li><span class="text-green-400">✓</span> High reliability</li>
+                        <li><span class="text-green-400">✓</span> Modular design</li>
+                        <li><span class="text-red-400">✗</span> IPC overhead</li>
+                        <li><span class="text-red-400">✗</span> Complex message passing</li>
+                    </ul>
+                </div>
+
+                <!-- Hybrid Kernel -->
+                <div class="bg-gray-800 p-6 rounded-xl shadow-inner">
+                    <h4 class="font-semibold mb-4 text-purple-400">Hybrid Kernel</h4>
+                    <svg class="w-full h-40 mb-4" viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="10" y="10" width="180" height="35" rx="5" fill="#1e40af" stroke="#3b82f6" stroke-width="2"/>
+                        <text x="100" y="22" text-anchor="middle" fill="white" font-size="10" font-weight="bold">USER SPACE</text>
+                        <text x="60" y="35" text-anchor="middle" fill="#bfdbfe" font-size="8">File System</text>
+                        <text x="140" y="35" text-anchor="middle" fill="#bfdbfe" font-size="8">Some Drivers</text>
+
+                        <rect x="10" y="55" width="180" height="60" rx="5" fill="#7c2d12" stroke="#dc2626" stroke-width="2"/>
+                        <text x="100" y="70" text-anchor="middle" fill="white" font-size="10" font-weight="bold">KERNEL SPACE</text>
+                        <text x="50" y="85" text-anchor="middle" fill="#fecaca" font-size="8">Core Services</text>
+                        <text x="150" y="85" text-anchor="middle" fill="#fecaca" font-size="8">Critical Drivers</text>
+                        <text x="100" y="100" text-anchor="middle" fill="#fecaca" font-size="8">Memory + Process Mgmt</text>
+
+                        <rect x="10" y="125" width="180" height="15" rx="3" fill="#374151" stroke="#6b7280" stroke-width="1"/>
+                        <text x="100" y="135" text-anchor="middle" fill="white" font-size="10">Hardware</text>
+                    </svg>
+                    <ul class="text-xs text-gray-300 space-y-1">
+                        <li><span class="text-green-400">✓</span> Performance + modularity</li>
+                        <li><span class="text-green-400">✓</span> Flexible architecture</li>
+                        <li><span class="text-red-400">✗</span> Complex design</li>
+                        <li><span class="text-red-400">✗</span> Hard to maintain</li>
+                    </ul>
+                </div>
+
+                <!-- Nano Kernel -->
+                <div class="bg-gray-800 p-6 rounded-xl shadow-inner">
+                    <h4 class="font-semibold mb-4 text-cyan-400">Nano Kernel</h4>
+                    <svg class="w-full h-40 mb-4" viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="10" y="10" width="180" height="70" rx="5" fill="#1e40af" stroke="#3b82f6" stroke-width="2"/>
+                        <text x="100" y="25" text-anchor="middle" fill="white" font-size="10" font-weight="bold">USER SPACE</text>
+                        <text x="40" y="40" text-anchor="middle" fill="#bfdbfe" font-size="7">Process Mgr</text>
+                        <text x="100" y="40" text-anchor="middle" fill="#bfdbfe" font-size="7">Memory Mgr</text>
+                        <text x="160" y="40" text-anchor="middle" fill="#bfdbfe" font-size="7">File System</text>
+                        <text x="40" y="55" text-anchor="middle" fill="#bfdbfe" font-size="7">Scheduler</text>
+                        <text x="100" y="55" text-anchor="middle" fill="#bfdbfe" font-size="7">Drivers</text>
+                        <text x="160" y="55" text-anchor="middle" fill="#bfdbfe" font-size="7">Network</text>
+                        <text x="100" y="70" text-anchor="middle" fill="#bfdbfe" font-size="7">Device Abstraction</text>
+
+                        <rect x="10" y="90" width="180" height="25" rx="5" fill="#065f46" stroke="#10b981" stroke-width="2"/>
+                        <text x="100" y="100" text-anchor="middle" fill="white" font-size="9" font-weight="bold">NANO KERNEL</text>
+                        <text x="100" y="110" text-anchor="middle" fill="#d1fae5" font-size="7">Hardware Abstraction + IPC</text>
+
+                        <rect x="10" y="125" width="180" height="15" rx="3" fill="#374151" stroke="#6b7280" stroke-width="1"/>
+                        <text x="100" y="135" text-anchor="middle" fill="white" font-size="10">Hardware</text>
+                    </svg>
+                    <ul class="text-xs text-gray-300 space-y-1">
+                        <li><span class="text-green-400">✓</span> Extremely minimal</li>
+                        <li><span class="text-green-400">✓</span> Maximum flexibility</li>
+                        <li><span class="text-red-400">✗</span> High complexity</li>
+                        <li><span class="text-red-400">✗</span> Research-oriented</li>
+                    </ul>
+                </div>
+
+                <!-- Exokernel -->
+                <div class="bg-gray-800 p-6 rounded-xl shadow-inner">
+                    <h4 class="font-semibold mb-4 text-yellow-400">Exokernel</h4>
+                    <svg class="w-full h-40 mb-4" viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="10" y="10" width="180" height="60" rx="5" fill="#1e40af" stroke="#3b82f6" stroke-width="2"/>
+                        <text x="100" y="25" text-anchor="middle" fill="white" font-size="10" font-weight="bold">LIBRARY OS</text>
+                        <text x="60" y="40" text-anchor="middle" fill="#bfdbfe" font-size="8">App-specific</text>
+                        <text x="140" y="40" text-anchor="middle" fill="#bfdbfe" font-size="8">OS Services</text>
+                        <text x="100" y="55" text-anchor="middle" fill="#bfdbfe" font-size="8">Resource Management</text>
+
+                        <rect x="10" y="80" width="180" height="35" rx="5" fill="#92400e" stroke="#f59e0b" stroke-width="2"/>
+                        <text x="100" y="95" text-anchor="middle" fill="white" font-size="10" font-weight="bold">EXOKERNEL</text>
+                        <text x="100" y="107" text-anchor="middle" fill="#fef3c7" font-size="8">Resource Allocation Only</text>
+
+                        <rect x="10" y="125" width="180" height="15" rx="3" fill="#374151" stroke="#6b7280" stroke-width="1"/>
+                        <text x="100" y="135" text-anchor="middle" fill="white" font-size="10">Hardware</text>
+                    </svg>
+                    <ul class="text-xs text-gray-300 space-y-1">
+                        <li><span class="text-green-400">✓</span> Application control</li>
+                        <li><span class="text-green-400">✓</span> High performance</li>
+                        <li><span class="text-red-400">✗</span> Complex development</li>
+                        <li><span class="text-red-400">✗</span> Limited adoption</li>
+                    </ul>
+                </div>
+
+                <!-- Unikernel -->
+                <div class="bg-gray-800 p-6 rounded-xl shadow-inner">
+                    <h4 class="font-semibold mb-4 text-pink-400">Unikernel</h4>
+                    <svg class="w-full h-40 mb-4" viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="10" y="10" width="180" height="80" rx="5" fill="#7c2d12" stroke="#dc2626" stroke-width="2"/>
+                        <text x="100" y="30" text-anchor="middle" fill="white" font-size="10" font-weight="bold">SINGLE ADDRESS SPACE</text>
+                        <text x="100" y="45" text-anchor="middle" fill="#fecaca" font-size="8">Application + OS Services</text>
+                        <text x="60" y="60" text-anchor="middle" fill="#fecaca" font-size="8">Minimal Runtime</text>
+                        <text x="140" y="60" text-anchor="middle" fill="#fecaca" font-size="8">Selected Drivers</text>
+                        <text x="100" y="75" text-anchor="middle" fill="#fecaca" font-size="8">No User/Kernel Separation</text>
+
+                        <rect x="10" y="100" width="180" height="15" rx="3" fill="#374151" stroke="#6b7280" stroke-width="1"/>
+                        <text x="100" y="110" text-anchor="middle" fill="white" font-size="10">Hypervisor/Hardware</text>
+
+                        <rect x="10" y="125" width="180" height="15" rx="3" fill="#1f2937" stroke="#4b5563" stroke-width="1"/>
+                        <text x="100" y="135" text-anchor="middle" fill="#9ca3af" font-size="10">Physical Hardware</text>
+                    </svg>
+                    <ul class="text-xs text-gray-300 space-y-1">
+                        <li><span class="text-green-400">✓</span> Minimal overhead</li>
+                        <li><span class="text-green-400">✓</span> Fast boot time</li>
+                        <li><span class="text-red-400">✗</span> Single application</li>
+                        <li><span class="text-red-400">✗</span> Limited debugging</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Detailed Comparison Table -->
+            <div class="bg-gray-800 p-6 rounded-xl shadow-inner mb-6">
+                <h4 class="font-semibold mb-4 text-blue-300">Comprehensive Kernel Architecture Comparison</h4>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-gray-300 text-sm">
+                        <thead>
+                            <tr class="bg-gray-700">
+                                <th class="p-3 text-left font-semibold">Architecture</th>
+                                <th class="p-3 text-left font-semibold">Core Size</th>
+                                <th class="p-3 text-left font-semibold">Performance</th>
+                                <th class="p-3 text-left font-semibold">Reliability</th>
+                                <th class="p-3 text-left font-semibold">Security</th>
+                                <th class="p-3 text-left font-semibold">Use Cases</th>
+                                <th class="p-3 text-left font-semibold">Examples</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-t border-gray-700 hover:bg-gray-750">
+                                <td class="p-3 font-semibold text-red-400">Monolithic</td>
+                                <td class="p-3">Large (5-15MB)</td>
+                                <td class="p-3 text-green-400">Excellent</td>
+                                <td class="p-3 text-yellow-400">Moderate</td>
+                                <td class="p-3 text-yellow-400">Good</td>
+                                <td class="p-3">Servers, Desktops, HPC</td>
+                                <td class="p-3">Linux, *BSD, Windows</td>
+                            </tr>
+                            <tr class="border-t border-gray-700 hover:bg-gray-750">
+                                <td class="p-3 font-semibold text-blue-400">Microkernel</td>
+                                <td class="p-3">Small (50KB-1MB)</td>
+                                <td class="p-3 text-yellow-400">Moderate</td>
+                                <td class="p-3 text-green-400">Excellent</td>
+                                <td class="p-3 text-green-400">Excellent</td>
+                                <td class="p-3">Real-time, Embedded</td>
+                                <td class="p-3">QNX, Minix, L4</td>
+                            </tr>
+                            <tr class="border-t border-gray-700 hover:bg-gray-750">
+                                <td class="p-3 font-semibold text-purple-400">Hybrid</td>
+                                <td class="p-3">Medium (2-8MB)</td>
+                                <td class="p-3 text-green-400">Good</td>
+                                <td class="p-3 text-yellow-400">Good</td>
+                                <td class="p-3 text-yellow-400">Good</td>
+                                <td class="p-3">General Purpose</td>
+                                <td class="p-3">Windows NT, macOS</td>
+                            </tr>
+                            <tr class="border-t border-gray-700 hover:bg-gray-750">
+                                <td class="p-3 font-semibold text-cyan-400">Nano</td>
+                                <td class="p-3">Tiny (10-100KB)</td>
+                                <td class="p-3 text-yellow-400">Variable</td>
+                                <td class="p-3 text-green-400">High</td>
+                                <td class="p-3 text-green-400">High</td>
+                                <td class="p-3">Research, Specialized</td>
+                                <td class="p-3">KeyKOS, EROS</td>
+                            </tr>
+                            <tr class="border-t border-gray-700 hover:bg-gray-750">
+                                <td class="p-3 font-semibold text-yellow-400">Exokernel</td>
+                                <td class="p-3">Minimal (20-200KB)</td>
+                                <td class="p-3 text-green-400">Excellent</td>
+                                <td class="p-3 text-yellow-400">Variable</td>
+                                <td class="p-3 text-red-400">Limited</td>
+                                <td class="p-3">Research, HPC</td>
+                                <td class="p-3">MIT Exokernel</td>
+                            </tr>
+                            <tr class="border-t border-gray-700 hover:bg-gray-750">
+                                <td class="p-3 font-semibold text-pink-400">Unikernel</td>
+                                <td class="p-3">App-specific</td>
+                                <td class="p-3 text-green-400">Excellent</td>
+                                <td class="p-3 text-yellow-400">Moderate</td>
+                                <td class="p-3 text-green-400">Good</td>
+                                <td class="p-3">Cloud, Containers</td>
+                                <td class="p-3">MirageOS, Unikraft</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Nano Kernel Deep Dive -->
+            <div class="bg-gray-800 p-6 rounded-xl shadow-inner mb-6">
+                <h4 class="font-semibold mb-4 text-cyan-300">Nano Kernel Architecture Deep Dive</h4>
+                <p class="text-gray-300 mb-4 leading-relaxed">
+                    Nano kernels represent the extreme minimalist approach, providing only the most fundamental hardware abstraction. They typically implement only:
+                </p>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <h5 class="font-semibold mb-3 text-cyan-400">Core Components (10-100KB)</h5>
+                        <ul class="text-gray-300 space-y-2 text-sm">
+                            <li><span class="text-cyan-400">•</span> <strong>Address Space Management:</strong> Basic memory protection and virtual addressing</li>
+                            <li><span class="text-cyan-400">•</span> <strong>Thread Primitives:</strong> Minimal threading support with context switching</li>
+                            <li><span class="text-cyan-400">•</span> <strong>IPC Mechanisms:</strong> Message passing between user-space components</li>
+                            <li><span class="text-cyan-400">•</span> <strong>Interrupt Handling:</strong> Hardware interrupt dispatch to user handlers</li>
+                            <li><span class="text-cyan-400">•</span> <strong>Capability System:</strong> Fine-grained access control</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h5 class="font-semibold mb-3 text-cyan-400">User-Space Services</h5>
+                        <ul class="text-gray-300 space-y-2 text-sm">
+                            <li><span class="text-green-400">•</span> <strong>Process Manager:</strong> Process creation, lifecycle management</li>
+                            <li><span class="text-green-400">•</span> <strong>Memory Manager:</strong> Page allocation, virtual memory policies</li>
+                            <li><span class="text-green-400">•</span> <strong>Device Drivers:</strong> Hardware-specific communication</li>
+                            <li><span class="text-green-400">•</span> <strong>File Systems:</strong> Storage abstraction and management</li>
+                            <li><span class="text-green-400">•</span> <strong>Network Stack:</strong> Protocol implementation</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Linux Kernel Modules -->
+            <div class="bg-gray-800 p-6 rounded-xl shadow-inner">
+                <h4 class="font-semibold mb-4 text-green-300">Linux Monolithic Design with Dynamic Modularity</h4>
+                <p class="text-gray-300 mb-4 leading-relaxed">
+                    Linux combines monolithic performance with modular flexibility through loadable kernel modules (LKMs). This hybrid approach allows runtime kernel extension without recompilation.
+                </p>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="bg-gray-700 p-4 rounded-lg">
+                        <h5 class="font-semibold mb-3 text-blue-300">Module Management</h5>
+                        <p class="font-mono text-sm text-gray-200">$ lsmod | head -10</p>
+                        <p class="text-gray-400 text-xs mt-1">List loaded kernel modules</p>
+                        <p class="font-mono text-sm text-gray-200 mt-3">$ modinfo e1000e</p>
+                        <p class="text-gray-400 text-xs mt-1">Display Intel Ethernet driver information</p>
+                        <p class="font-mono text-sm text-gray-200 mt-3">$ sudo modprobe -r snd_hda_intel</p>
+                        <p class="text-gray-400 text-xs mt-1">Remove audio driver module</p>
+                    </div>
+                    <div class="bg-gray-700 p-4 rounded-lg">
+                        <h5 class="font-semibold mb-3 text-blue-300">Advanced Module Operations</h5>
+                        <p class="font-mono text-sm text-gray-200">$ cat /proc/modules | wc -l</p>
+                        <p class="text-gray-400 text-xs mt-1">Count total loaded modules</p>
+                        <p class="font-mono text-sm text-gray-200 mt-3">$ dmesg | grep -i "module"</p>
+                        <p class="text-gray-400 text-xs mt-1">Check module loading messages</p>
+                        <p class="font-mono text-sm text-gray-200 mt-3">$ sudo depmod -a</p>
+                        <p class="text-gray-400 text-xs mt-1">Update module dependency database</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SVG Definitions -->
+        <svg width="0" height="0">
+            <defs>
+                <marker id="microArrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+</div>
+        <div class="tab-content" id="boot-process">
+    <div class="bg-gray-800 rounded-xl p-6 shadow-lg mb-8">
+        <h2 class="text-3xl font-bold mb-6 text-blue-400">Kernel Boot Process</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div>
+                <h3 class="text-xl font-semibold mb-4 text-yellow-300">Boot Sequence Overview</h3>
+                <p class="text-gray-300 mb-4">
+                    The Linux kernel boot process initializes the system from power-on to a running kernel, involving multiple stages like BIOS/UEFI, bootloader, and kernel initialization.
+                </p>
+
+                <div class="bg-gray-700 p-4 rounded-lg mb-4">
+                    <h4 class="font-semibold mb-2 text-green-300">Boot Stages</h4>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 text-sm">
+                        <li><span class="font-semibold">BIOS/UEFI:</span> Initializes hardware, loads bootloader</li>
+                        <li><span class="font-semibold">Bootloader (GRUB):</span> Loads kernel and initramfs</li>
+                        <li><span class="font-semibold">Kernel:</span> Initializes drivers, mounts root filesystem</li>
+                        <li><span class="font-semibold">Init System:</span> Starts user-space services</li>
+                    </ul>
+                </div>
+
+                <div class="bg-gray-700 p-4 rounded-lg mb-4">
+                    <h4 class="font-semibold mb-2 text-green-300">Kernel Initialization</h4>
+                    <p class="text-gray-300 text-sm mb-2">
+                        The kernel sets up memory management, interrupts, and essential drivers before handing control to the init system.
+                    </p>
+                    <div class="bg-gray-600 p-3 rounded mb-2">
+                        <h5 class="font-semibold text-blue-300">Key Steps</h5>
+                        <ul class="list-disc list-inside text-gray-300 text-xs space-y-1">
+                            <li>Decompress kernel image</li>
+                            <li>Initialize CPU and memory</li>
+                            <li>Setup interrupt handling</li>
+                            <li>Mount root filesystem</li>
+                        </ul>
+                    </div>
+                    <div class="bg-gray-800 p-3 rounded">
+                        <h5 class="font-semibold mb-1 text-blue-300">C Program to Inspect Boot Parameters</h5>
+                        <pre class="bg-gray-900 p-2 rounded text-xs overflow-x-auto"><code class="language-c">#include <stdio.h>
+#include <string.h>
+
+#define CMDLINE_SIZE 4096
+
+int main() {
+    FILE *cmdline = fopen("/proc/cmdline", "r");
+    char buffer[CMDLINE_SIZE];
+
+    if (!cmdline) {
+        perror("fopen /proc/cmdline");
+        return 1;
+    }
+
+    if (fgets(buffer, CMDLINE_SIZE, cmdline)) {
+        printf("Kernel command line: %s\n", buffer);
+
+        // Parse specific parameters
+        char *token = strtok(buffer, " ");
+        while (token) {
+            if (strncmp(token, "root=", 5) == 0) {
+                printf("Root filesystem: %s\n", token + 5);
+            } else if (strncmp(token, "init=", 5) == 0) {
+                printf("Init program: %s\n", token + 5);
+            }
+            token = strtok(NULL, " ");
+        }
+    }
+
+    fclose(cmdline);
+    return 0;
+}</code></pre>
+                        <p class="text-gray-400 text-xs mt-1">Compile with: gcc boot_params.c -o boot_params</p>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xl font-semibold mb-4 text-yellow-300">Bootloader Configuration</h3>
+                <p class="text-gray-300 mb-4">
+                    Bootloaders like GRUB configure kernel parameters and load the kernel into memory. They also support multi-boot and recovery modes.
+                </p>
+
+                <div class="bg-gray-700 p-4 rounded-lg mb-4">
+                    <h4 class="font-semibold mb-2 text-green-300">GRUB Components</h4>
+                    <ul class="list-disc list-inside text-gray-300 text-sm space-y-2">
+                        <li><span class="font-semibold">grub.cfg:</span> Main configuration file</li>
+                        <li><span class="font-semibold">vmlinuz:</span> Compressed kernel image</li>
+                        <li><span class="font-semibold">initramfs:</span> Initial RAM filesystem</li>
+                        <li><span class="font-semibold">Boot Menu:</span> User interface for boot options</li>
+                    </ul>
+                </div>
+
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <h4 class="font-semibold mb-2 text-green-300">GRUB Configuration Example</h4>
+                    <p class="text-gray-300 text-sm mb-2">
+                        A sample GRUB configuration entry for a Linux kernel.
+                    </p>
+                    <div class="bg-gray-800 p-3 rounded">
+                        <pre class="bg-gray-900 p-2 rounded text-xs overflow-x-auto"><code class="language-bash">menuentry 'Linux 5.15' {
+    set root='hd0,msdos1'
+    linux /vmlinuz-5.15.0 root=/dev/sda1 ro quiet splash
+    initrd /initrd.img-5.15.0
+}</code></pre>
+                        <p class="text-gray-400 text-xs mt-1">Located in: /boot/grub/grub.cfg</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+                <h3 class="text-xl font-semibold mb-4 text-yellow-300">Initramfs and Init</h3>
+                <p class="text-gray-300 mb-4">
+                    The initramfs provides a temporary filesystem for early boot, and the init system (e.g., systemd) starts user-space services.
+                </p>
+
+                <div class="bg-gray-700 p-4 rounded-lg mb-4">
+                    <h4 class="font-semibold text-green-300">Initramfs Tasks</h4>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 text-sm mt-2">
+                        <li><span class="font-semibold">Load Drivers:</span> For storage and filesystems</li>
+                        <li><span class="font-semibold">Mount Root:</span> Prepares root filesystem</li>
+                        <li><span class="font-semibold">Run Init:</span> Starts init process (PID 1)</li>
+                    </ul>
+                </div>
+
+                <div class="bg-gray-800 p-4 rounded-lg">
+                    <h4 class="font-semibold mb-2 text-blue-300">Inspecting Initramfs</h4>
+                    <pre class="bg-gray-900 p-2 rounded text-xs overflow-x-auto"><code class="language-bash"># Extract initramfs contents
+mkdir /tmp/initramfs
+cd /tmp/initramfs
+zcat /boot/initrd.img-5.15.0 | cpio -idmv
+
+# List initramfs scripts
+ls init *.sh
+</code></pre>
+                    <p class="text-gray-400 text-xs mt-2">Note: Requires root for some operations</p>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xl font-semibold mb-4 text-yellow-300">Boot Monitoring</h3>
+
+                <div class="bg-gray-700 p-4 rounded-lg mb-4">
+                    <h4 class="font-semibold mb-2 text-green-300">Boot Log Analysis</h4>
+                    <div class="bg-gray-800 p-3 rounded">
+                        <pre class="bg-gray-900 p-2 rounded text-xs overflow-x-auto"><code class="language-bash"># View kernel boot messages
+dmesg | less
+
+# Analyze systemd boot time
+systemd-analyze
+
+# Detailed boot process breakdown
+systemd-analyze blame
+</code></pre>
+                        <p class="text-gray-400 text-xs mt-1">Note: Useful for debugging boot issues</p>
+                    </div>
+                </div>
+
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <h4 class="font-semibold mb-2 text-green-300">Boot Timeline Demo</h4>
+                    <div class="bg-gray-800 p-3 rounded">
+                        <div id="boot-timeline" class="mb-4">
+                            <button id="start-boot" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Show Boot Timeline</button>
+                            <div id="boot-output" class="mt-4 text-gray-300"></div>
+                        </div>
+                        <script>
+                            document.getElementById('start-boot').addEventListener('click', () => {
+                                const output = document.getElementById('boot-output');
+                                output.innerHTML = 'Simulating boot process...\n';
+
+                                const stages = [
+                                    { name: 'BIOS/UEFI', duration: 500 },
+                                    { name: 'Bootloader', duration: 300 },
+                                    { name: 'Kernel Init', duration: 700 },
+                                    { name: 'Initramfs', duration: 400 },
+                                    { name: 'Init System', duration: 600 }
+                                ];
+
+                                let time = 0;
+                                stages.forEach(stage => {
+                                    setTimeout(() => {
+                                        output.innerHTML += `${stage.name} completed at ${time}ms\n`;
+                                    }, time);
+                                    time += stage.duration;
+                                });
+
+                                setTimeout(() => {
+                                    output.innerHTML += 'Boot process complete!';
+                                }, time);
+                            });
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+        <!-- Process Management Tab -->
+        <div class="tab-content" id="process">
+    <div class="bg-gray-900 rounded-2xl p-8 shadow-2xl mb-12">
+        <h2 class="text-4xl font-extrabold mb-8 text-blue-400 tracking-tight">Process Management</h2>
+
+        <!-- Process Fundamentals -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            <div>
+                <h3 class="text-2xl font-semibold mb-4 text-yellow-300">Process Fundamentals</h3>
+                <p class="text-gray-300 mb-6 leading-relaxed">
+                    A process in Linux is an executing program instance, managed by the kernel. Each process has its own address space, state, and resources. The kernel uses the <code>task_struct</code> data structure to track process details, forming a hierarchy starting with the <code>init</code> process (PID 1).
+                </p>
+                <ul class="list-disc list-inside text-gray-300 space-y-3 mb-6">
+                    <li><span class="font-semibold">Process Control Block (PCB):</span> <code>task_struct</code> stores PID, memory pointers, state, and context.</li>
+                    <li><span class="font-semibold">Process ID (PID):</span> Unique identifier, e.g., <code>systemd</code> is typically PID 1.</li>
+                    <li><span class="font-semibold">Parent/Child Hierarchy:</span> Processes are created by parents; <code>init</code> or <code>systemd</code> is the root.</li>
+                    <li><span class="font-semibold">States:</span> Running, waiting (interruptible/uninterruptible), stopped, zombie, or dead.</li>
+                </ul>
+                <div class="bg-gray-800 p-6 rounded-xl shadow-inner">
+                    <h4 class="font-semibold mb-3 text-green-300">Process Commands</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="bg-gray-700 p-3 rounded-lg">
+                            <p class="font-mono text-sm text-green-300">$ ps -eF</p>
+                            <p class="text-gray-400 text-xs mt-2">Lists all processes with detailed info (PID, CPU, memory).</p>
+                        </div>
+                        <div class="bg-gray-700 p-3 rounded-lg">
+                            <p class="font-mono text-sm text-green-300">$ htop</p>
+                            <p class="text-gray-400 text-xs mt-2">Interactive process viewer with CPU/memory usage.</p>
+                        </div>
+                        <div class="bg-gray-700 p-3 rounded-lg">
+                            <p class="font-mono text-sm text-green-300">$ pstree -p</p>
+                            <p class="text-gray-400 text-xs mt-2">Shows process hierarchy with PIDs.</p>
+                        </div>
+                        <div class="bg-gray-700 p-3 rounded-lg">
+                            <p class="font-mono text-sm text-green-300">$ kill -SIGTERM 1234</p>
+                            <p class="text-gray-400 text-xs mt-2">Gracefully terminates process with PID 1234.</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Process Hierarchy Diagram -->
+                <div class="mt-6">
+                    <h4 class="text-lg font-semibold mb-3 text-green-300">Process Hierarchy</h4>
+                    <svg class="w-full h-40" viewBox="0 0 400 150" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="150" y="10" width="100" height="30" rx="5" fill="#1e3a8a" stroke="#3b82f6"/>
+                        <text x="200" y="30" text-anchor="middle" fill="#bfdbfe" font-size="12">init (PID 1)</text>
+                        <path d="M200 40 L200 60" stroke="#6b7280" stroke-width="2"/>
+                        <path d="M200 60 L100 80" stroke="#6b7280" stroke-width="2"/>
+                        <path d="M200 60 L300 80" stroke="#6b7280" stroke-width="2"/>
+                        <rect x="50" y="80" width="100" height="30" rx="5" fill="#374151" stroke="#6b7280"/>
+                        <text x="100" y="100" text-anchor="middle" fill="#d1d5db" font-size="12">bash (PID 123)</text>
+                        <rect x="250" y="80" width="100" height="30" rx="5" fill="#374151" stroke="#6b7280"/>
+                        <text x="300" y="100" text-anchor="middle" fill="#d1d5db" font-size="12">httpd (PID 456)</text>
+                        <path d="M100 110 L100 130" stroke="#6b7280" stroke-width="2"/>
+                        <rect x="50" y="130" width="100" height="30" rx="5" fill="#374151" stroke="#6b7280"/>
+                        <text x="100" y="150" text-anchor="middle" fill="#d1d5db" font-size="12">ls (PID 789)</text>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Process Scheduler -->
+            <div>
+                <h3 class="text-2xl font-semibold mb-4 text-yellow-300">Process Scheduler</h3>
+                <p class="text-gray-300 mb-6 leading-relaxed">
+                    The Linux kernel uses the Completely Fair Scheduler (CFS) to allocate CPU time fairly among processes. CFS tracks virtual runtime (<code>vruntime</code>) to ensure each process gets proportional CPU access. Real-time processes use priority-based scheduling (e.g., SCHED_FIFO).
+                </p>
+                <ul class="list-disc list-inside text-gray-300 space-y-3 mb-6">
+                    <li><span class="font-semibold">CFS:</span> Uses a red-black tree to prioritize processes with the lowest <code>vruntime</code>.</li>
+                    <li><span class="font-semibold">Real-Time Scheduling:</span> SCHED_FIFO and SCHED_RR for time-critical tasks.</li>
+                    <li><span class="font-semibold">CPU Affinity:</span> Binds processes to specific CPU cores for performance.</li>
+                </ul>
+                <div class="bg-gray-800 p-6 rounded-xl shadow-inner">
+                    <p class="font-mono text-sm text-green-300">$ chrt -r -p 20 1234</p>
+                    <p class="text-gray-400 text-xs mt-2">Sets real-time SCHED_RR policy with priority 20 for PID 1234.</p>
+                    <p class="font-mono text-sm text-green-300 mt-4">$ taskset -cp 0-3 1234</p>
+                    <p class="text-gray-400 text-xs mt-2">Binds PID 1234 to CPU cores 0-3.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Types of Processes -->
+        <div class="mb-12">
+            <h3 class="text-2xl font-semibold mb-4 text-yellow-300">Types of Processes</h3>
+            <p class="text-gray-300 mb-6 leading-relaxed">
+                Linux processes are categorized based on their role and behavior. Each type serves distinct purposes in the system.
+            </p>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-gray-800 p-6 rounded-xl shadow-inner">
+                    <h4 class="font-semibold text-green-300 mb-3">User Processes</h4>
+                    <p class="text-gray-300 text-sm leading-relaxed">Run in user space, initiated by users (e.g., <code>firefox</code>, <code>bash</code>). Subject to standard scheduling and permissions.</p>
+                    <p class="font-mono text-sm text-green-300 mt-3">$ ps -u $USER</p>
+                    <p class="text-gray-400 text-xs mt-2">Lists processes owned by the current user.</p>
+                </div>
+                <div class="bg-gray-800 p-6 rounded-xl shadow-inner">
+                    <h4 class="font-semibold text-green-300 mb-3">Kernel Processes</h4>
+                    <p class="text-gray-300 text-sm leading-relaxed">Run in kernel space, handling system tasks (e.g., <code>kworker</code>, <code>kswapd</code>). Visible in <code>ps</code> with square brackets.</p>
+                    <p class="font-mono text-sm text-green-300 mt-3">$ ps -ef | grep "\[k"\]</p>
+                    <p class="text-gray-400 text-xs mt-2">Lists kernel threads.</p>
+                </div>
+                <div class="bg-gray-800 p-6 rounded-xl shadow-inner">
+                    <h4 class="font-semibold text-green-300 mb-3">Daemon Processes</h4>
+                    <p class="text-gray-300 text-sm leading-relaxed">Background services (e.g., <code>sshd</code>, <code>crond</code>) that run continuously, often started by <code>systemd</code>.</p>
+                    <p class="font-mono text-sm text-green-300 mt-3">$ systemctl list-units --type=service</p>
+                    <p class="text-gray-400 text-xs mt-2">Lists active daemons.</p>
+                </div>
+                <div class="bg-gray-800 p-6 rounded-xl shadow-inner">
+                    <h4 class="font-semibold text-green-300 mb-3">Real-Time Processes</h4>
+                    <p class="text-gray-300 text-sm leading-relaxed">High-priority processes for time-critical tasks (e.g., audio processing). Use SCHED_FIFO or SCHED_RR policies.</p>
+                    <p class="font-mono text-sm text-green-300 mt-3">$ chrt -p $(pidof jackd)</p>
+                    <p class="text-gray-400 text-xs mt-2">Checks scheduling policy for the JACK audio server.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Process Life Cycle -->
+        <div class="mb-12">
+            <h3 class="text-2xl font-semibold mb-4 text-yellow-300">Process Life Cycle</h3>
+            <p class="text-gray-300 mb-6 leading-relaxed">
+                A process transitions through various states during its lifetime, managed by the kernel. These states determine its execution status and resource allocation.
+            </p>
+            <div class="flex justify-center mb-6">
+                <svg class="w-full max-w-2xl" viewBox="0 0 600 300" xmlns="http://www.w3.org/2000/svg">
+                    <!-- States -->
+                    <rect x="50" y="50" width="100" height="50" rx="8" fill="#374151" stroke="#6b7280"/>
+                    <text x="100" y="75" text-anchor="middle" fill="#d1d5db" font-size="12">Created</text>
+                    <rect x="200" y="50" width="100" height="50" rx="8" fill="#374151" stroke="#6b7280"/>
+                    <text x="250" y="75" text-anchor="middle" fill="#d1d5db" font-size="12">Running</text>
+                    <rect x="350" y="50" width="100" height="50" rx="8" fill="#374151" stroke="#6b7280"/>
+                    <text x="400" y="75" text-anchor="middle" fill="#d1d5db" font-size="12">Waiting</text>
+                    <rect x="200" y="150" width="100" height="50" rx="8" fill_ALLOC#374151" stroke="#6b7280"/>
+                    <text x="250" y="175" text-anchor="middle" fill="#d1d5db" font-size="12">Stopped</text>
+                    <rect x="350" y="150" width="100" height="50" rx="8" fill="#374151" stroke="#6b7280"/>
+                    <text x="400" y="175" text-anchor="middle" fill="#d1d5db" font-size="12">Zombie</text>
+                    <rect x="500" y="100" width="100" height="50" rx="8" fill="#374151" stroke="#6b7280"/>
+                    <text x="550" y="125" text-anchor="middle" fill="#d1d5db" font-size="12">Terminated</text>
+                    <!-- Transitions -->
+                    <path d="M150 75 L200 75" fill="none" stroke="#6b7280" stroke-width="2" marker-end="url(#arrow)"/>
+                    <path d="M300 75 L350 75" fill="none" stroke="#6b7280" stroke-width="2" marker-end="url(#arrow)"/>
+                    <path d="M250 100 L250 150" fill="none" stroke="#6b7280" stroke-width="2" marker-end="url(#arrow)"/>
+                    <path d="M250 150 L250 100" fill="none" stroke="#6b7280" stroke-width="2" marker-end="url(#arrow)"/>
+                    <path d="M400 75 L400 150" fill="none" stroke="#6b7280" stroke-width="2" marker-end="url(#arrow)"/>
+                    <path d="M400 150 L400 75" fill="none" stroke="#6b7280" stroke-width="2" marker-end="url(#arrow)"/>
+                    <path d="M400 175 L500 125" fill="none" stroke="#6b7280" stroke-width="2" marker-end="url(#arrow)"/>
+                    <path d="M250 175 L500 125" fill="none" stroke="#6b7280" stroke-width="2" marker-end="url(#arrow)"/>
+                    <defs>
+                        <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#6b7280"/>
+                        </marker>
+                    </defs>
+                </svg>
+            </div>
+            <ul class="list-disc list-inside text-gray-300 space-y-3">
+                <li><span class="font-semibold">Created:</span> Process is initialized via <code>fork()</code>.</li>
+                <li><span class="font-semibold">Running:</span> Executing on CPU or ready to run.</li>
+                <li><span class="font-semibold">Waiting:</span> Blocked for I/O or events (interruptible or uninterruptible).</li>
+                <li><span class="font-semibold">Stopped:</span> Paused by signals (e.g., SIGSTOP).</li>
+                <li><span class="font-semibold">Zombie:</span> Terminated but awaiting parent to collect status.</li>
+                <li><span class="font-semibold">Terminated:</span> Process exits, resources are freed.</li>
+            </ul>
+        </div>
+
+        <!-- Process Creation -->
+        <div class="mb-12">
+            <h3 class="text-2xl font-semibold mb-4 text-yellow-300">Process Creation</h3>
+            <p class="text-gray-300 mb-6 leading-relaxed">
+                Processes are created using <code>fork()</code> to duplicate the parent and <code>exec()</code> to load a new program image. Threads, implemented as lightweight processes, share the same address space, managed via the <code>clone()</code> system call.
+            </p>
+            <div class="bg-gray-800 p-6 rounded-xl shadow-inner">
+                <h4 class="font-semibold mb-3 text-blue-300">Process Creation Example</h4>
+                <pre class="bg-black p-4 rounded-lg text-green-300 font-mono text-sm">
+#include &lt;stdio.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;sys/wait.h&gt;
+
+int main() {
+    pid_t pid = fork();
+    if (pid == 0) { // Child process
+        printf("Child PID: %d\n", getpid());
+        execlp("/bin/ls", "ls", "-l", NULL);
+        perror("execlp failed");
+        return 1;
+    } else if (pid > 0) { // Parent process
+        printf("Parent PID: %d\n", getpid());
+        wait(NULL); // Wait for child to complete
+        printf("Child completed\n");
+    } else {
+        perror("fork failed");
+        return 1;
+    }
+    return 0;
+}
+                </pre>
+                <p class="text-gray-400 text-xs mt-3">This program forks a child process that runs <code>ls -l</code>, while the parent waits for completion.</p>
+            </div>
+        </div>
+
+        <!-- Interprocess Communication -->
+        <div>
+            <h3 class="text-2xl font-semibold mb-4 text-yellow-300">Interprocess Communication (IPC)</h3>
+            <p class="text-gray-300 mb-6 leading-relaxed">
+                IPC mechanisms enable processes to exchange data or synchronize actions. Linux supports multiple methods tailored to different use cases.
+            </p>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-gray-800 p-6 rounded-xl shadow-inner">
+                    <h4 class="font-semibold text-green-300 mb-3">Pipes</h4>
+                    <p class="text-gray-300 text-sm leading-relaxed">Unidirectional data channels for related processes (e.g., parent-child).</p>
+                    <p class="font-mono text-sm text-green-300 mt-3">$ ls -l | grep ".txt"</p>
+                    <p class="text-gray-400 text-xs mt-2">Pipes output of <code>ls -l</code> to <code>grep</code>.</p>
+                </div>
+                <div class="bg-gray-800 p-6 rounded-xl shadow-inner">
+                    <h4 class="font-semibold text-green-300 mb-3">Shared Memory</h4>
+                    <p class="text-gray-300 text-sm leading-relaxed">Fastest IPC, allowing processes to share a memory region.</p>
+                    <p class="font-mono text-sm text-green-300 mt-3">shmget(), shmat()</p>
+                    <p class="text-gray-400 text-xs mt-2">System V calls to create and attach shared memory.</p>
+                </div>
+                <div class="bg-gray-800 p-6 rounded-xl shadow-inner">
+                    <h4 class="font-semibold text-green-300 mb-3">Message Queues</h4>
+                    <p class="text-gray-300 text-sm leading-relaxed">Structured message passing with priority support.</p>
+                    <p class="font-mono text-sm text-green-300 mt-3">msgget(), msgsnd()</p>
+                    <p class="text-gray-400 text-xs mt-2">System V calls for message queue operations.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+       <div class="tab-content" id="scheduling">
+    <div class="bg-gray-800 rounded-xl p-6 shadow-lg mb-8">
+        <h2 class="text-3xl font-bold mb-6 text-blue-400">Kernel Scheduling & Real-Time Kernels</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div>
+                <h3 class="text-xl font-semibold mb-4 text-yellow-300">Process Scheduling</h3>
+                <p class="text-gray-300 mb-4">
+                    The Linux kernel manages process execution using a scheduler to allocate CPU time. The Completely Fair Scheduler (CFS) is the default scheduler, prioritizing fairness and responsiveness.
+                </p>
+
+                <div class="bg-gray-700 p-4 rounded-lg mb-4">
+                    <h4 class="font-semibold mb-2 text-green-300">Scheduling Policies</h4>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 text-sm">
+                        <li><span class="font-semibold">SCHED_NORMAL:</span> Default for regular tasks (CFS)</li>
+                        <li><span class="font-semibold">SCHED_FIFO:</span> First-In-First-Out for real-time tasks</li>
+                        <li><span class="font-semibold">SCHED_RR:</span> Round-Robin for real-time tasks</li>
+                        <li><span class="font-semibold">SCHED_DEADLINE:</span> Earliest Deadline First scheduling</li>
+                    </ul>
+                </div>
+
+                <div class="bg-gray-700 p-4 rounded-lg mb-4">
+                    <h4 class="font-semibold mb-2 text-green-300">CFS in Detail</h4>
+                    <p class="text-gray-300 text-sm mb-2">
+                        CFS uses a red-black tree to track tasks, assigning CPU time based on virtual runtime (vruntime). Lower vruntime tasks get priority.
+                    </p>
+                    <div class="bg-gray-600 p-3 rounded mb-2">
+                        <h5 class="font-semibold text-blue-300">Key Concepts</h5>
+                        <ul class="list-disc list-inside text-gray-300 text-xs space-y-1">
+                            <li>Virtual runtime tracks CPU usage</li>
+                            <li>Weighted fairness via nice values (-20 to 19)</li>
+                            <li>Preemption for responsive multitasking</li>
+                        </ul>
+                    </div>
+                    <div class="bg-gray-800 p-3 rounded">
+                        <h5 class="font-semibold mb-1 text-blue-300">C Program Demonstrating Scheduling</h5>
+                        <pre class="bg-gray-900 p-2 rounded text-xs overflow-x-auto"><code class="language-c">#include "stdio.h"
+#include "sched.h"
+#include "unistd.h"
+#include "sys/types.h"
+#include "errno.h"
+
+int main() {
+    struct sched_param param;
+    int policy;
+
+    // Get current scheduling policy
+    policy = sched_getscheduler(0);
+    if (policy == -1) {
+        perror("sched_getscheduler");
+        return 1;
+    }
+
+    printf("Current policy: ");
+    switch (policy) {
+        case SCHED_OTHER: printf("SCHED_NORMAL\n"); break;
+        case SCHED_FIFO: printf("SCHED_FIFO\n"); break;
+        case SCHED_RR: printf("SCHED_RR\n"); break;
+        default: printf("Unknown\n");
+    }
+
+    // Set SCHED_RR policy (requires root)
+    param.sched_priority = 10;
+    if (sched_setscheduler(0, SCHED_RR, &param) == -1) {
+        perror("sched_setscheduler");
+        return 1;
+    }
+
+    printf("Changed to SCHED_RR with priority %d\n", param.sched_priority);
+
+    // Simulate work
+    for (int i = 0; i < 5; i++) {
+        printf("Working... %d\n", i);
+        sleep(1);
+    }
+
+    return 0;
+}</code></pre>
+                        <p class="text-gray-400 text-xs mt-1">Compile with: gcc sched_demo.c -o sched_demo</p>
+                        <p class="text-gray-400 text-xs">Note: Requires root for SCHED_RR/FIFO</p>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xl font-semibold mb-4 text-yellow-300">Real-Time Kernels</h3>
+                <p class="text-gray-300 mb-4">
+                    Real-time kernels prioritize deterministic response times for critical tasks, using PREEMPT_RT patches or dedicated real-time scheduling policies.
+                </p>
+
+                <div class="bg-gray-700 p-4 rounded-lg mb-4">
+                    <h4 class="font-semibold mb-2 text-green-300">Real-Time Features</h4>
+                    <ul class="list-disc list-inside text-gray-300 text-sm space-y-2">
+                        <li><span class="font-semibold">PREEMPT_RT:</span> Reduces kernel latency</li>
+                        <li><span class="font-semibold">High-Resolution Timers:</span> Precise timing</li>
+                        <li><span class="font-semibold">Priority Inheritance:</span> Avoids priority inversion</li>
+                        <li><span class="font-semibold">Threaded IRQs:</span> Interrupt handling as threads</li>
+                    </ul>
+                </div>
+
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <h4 class="font-semibold mb-2 text-green-300">Real-Time in Practice</h4>
+                    <p class="text-gray-300 text-sm mb-2">
+                        Real-time tasks can be programmed using SCHED_FIFO or SCHED_DEADLINE.
+                    </p>
+                    <div class="bg-gray-800 p-3 rounded">
+                        <h5 class="font-semibold mb-1 text-blue-300">C Program for Real-Time Task</h5>
+                        <pre class="bg-gray-900 p-2 rounded text-xs overflow-x-auto"><code class="language-c">#include "stdio.h"
+#include "sched.h"
+#include "time.h"
+#include 'unistd.h"
+
+#define NSEC_PER_SEC 1000000000L
+
+// Simple nanosecond sleep
+void nsleep(long nsec) {
+    struct timespec ts = { .tv_sec = 0, .tv_nsec = nsec };
+    nanosleep(&ts, NULL);
+}
+
+int main() {
+    struct sched_param param = { .sched_priority = 99 };
+
+    // Set SCHED_FIFO policy (requires root)
+    if (sched_setscheduler(0, SCHED_FIFO, &param) == -1) {
+        perror("sched_setscheduler");
+        return 1;
+    }
+
+    printf("Running as SCHED_FIFO with priority %d\n", param.sched_priority);
+
+    // Lock memory to avoid swapping
+    if (mlockall(MCL_CURRENT | MCL_FUTURE) == -1) {
+        perror("mlockall");
+        return 1;
+    }
+
+    // Simulate periodic real-time task
+    for (int i = 0; i < 10; i++) {
+        printf("Real-time task iteration %d\n", i);
+        nsleep(100 * 1000000); // 100ms
+    }
+
+    munlockall();
+    return 0;
+}</code></pre>
+                        <p class="text-gray-400 text-xs mt-1">Compile with: gcc rt_demo.c -o rt_demo</p>
+                        <p class="text-gray-400 text-xs">Note: Requires root privileges</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+                <h3 class="text-xl font-semibold mb-4 text-yellow-300">Scheduler Tuning</h3>
+                <p class="text-gray-300 mb-4">
+                    Linux provides tools to tune scheduling parameters for performance or real-time needs.
+                </p>
+
+                <div class="bg-gray-700 p-4 rounded-lg mb-4">
+                    <h4 class="font-semibold text-green-300">Tuning Tools</h4>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 text-sm mt-2">
+                        <li><span class="font-semibold">chrt:</span> Set scheduling policy and priority</li>
+                        <li><span class="font-semibold">nice/renice:</span> Adjust process priority</li>
+                        <li><span class="font-semibold">taskset:</span> Bind processes to CPU cores</li>
+                        <li><span class="font-semibold">sysctl:</span> Tune kernel scheduling parameters</li>
+                    </ul>
+                </div>
+
+                <div class="bg-gray-800 p-4 rounded-lg">
+                    <h4 class="font-semibold mb-2 text-blue-300">Scheduling Tuning Example</h4>
+                    <pre class="bg-gray-900 p-2 rounded text-xs overflow-x-auto"><code class="language-bash"># Set SCHED_FIFO policy for a process
+sudo chrt -f -p 50 $(pidof myprocess)
+
+# Adjust nice level
+renice 10 -p $(pidof myprocess)
+
+# Bind process to CPU core 0
+taskset -cp 0 $(pidof myprocess)
+
+# Tune CFS scheduler (example)
+sudo sysctl -w kernel.sched_min_granularity_ns=1000000
+</code></pre>
+                    <p class="text-gray-400 text-xs mt-2">Note: Requires root for some commands</p>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xl font-semibold mb-4 text-yellow-300">Advanced Scheduling Topics</h3>
+
+                <div class="bg-gray-700 p-4 rounded-lg mb-4">
+                    <h4 class="font-semibold mb-2 text-green-300">SCHED_DEADLINE Example</h4>
+                    <div class="bg-gray-800 p-3 rounded">
+                        <pre class="bg-gray-900 p-2 rounded text-xs overflow-x-auto"><code class="language-c">#include "stdio.h"
+#include "sched.h"
+#include "linux/sched.h"
+#include "unistd.h"
+
+int main() {
+    struct sched_attr {
+        __u32 size;
+        __u32 sched_policy;
+        __u64 sched_flags;
+        __s32 sched_nice;
+        __u32 sched_priority;
+        __u64 sched_runtime;
+        __u64 sched_deadline;
+        __u64 sched_period;
+    } attr = {
+        .size = sizeof(struct sched_attr),
+        .sched_policy = SCHED_DEADLINE,
+        .sched_runtime = 10 * 1000 * 1000,  // 10ms
+        .sched_deadline = 20 * 1000 * 1000, // 20ms
+        .sched_period = 20 * 1000 * 1000,   // 20ms
+    };
+
+    // Set SCHED_DEADLINE (requires root)
+    if (syscall(SYS_sched_setattr, 0, &attr, 0) == -1) {
+        perror("sched_setattr");
+        return 1;
+    }
+
+    printf("Running as SCHED_DEADLINE\n");
+
+    // Simulate periodic task
+    for (int i = 0; i < 10; i++) {
+        printf("Deadline task iteration %d\n", i);
+        usleep(10000); // 10ms
+    }
+
+    return 0;
+}</code></pre>
+                        <p class="text-gray-400 text-xs mt-1">Compile with: gcc deadline_demo.c -o deadline_demo</p>
+                        <p class="text-gray-400 text-xs">Note: Requires root and kernel support</p>
+                    </div>
+                </div>
+
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <h4 class="font-semibold mb-2 text-green-300">Monitoring Scheduling</h4>
+                    <p class="text-gray-300 text-sm mb-2">
+                        Tools to monitor scheduling behavior:
+                    </p>
+                    <div class="bg-gray-800 p-3 rounded">
+                        <pre class="bg-gray-900 p-2 rounded text-xs overflow-x-auto"><code class="language-bash"># Monitor scheduling statistics
+pidstat -w
+
+# View real-time process scheduling
+top -H
+
+# Check scheduling policy of a process
+chrt -r -p $(pidof myprocess)
+
+# Kernel scheduling events
+cat /proc/sched_debug
+</code></pre>
+                        <p class="text-gray-400 text-xs mt-1">Note: Some commands require root</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8">
+            <h3 class="text-xl font-semibold mb-4 text-yellow-300">Interactivity demo</h3>
+            <p class="text-gray-300 mb-4">
+                Below is an interactive demo to simulate process scheduling priorities using JavaScript, displaying a formatted log of process execution.
+            </p>
+
+            <div class="bg-gray-700 p-4 rounded-lg">
+                <h4 class="font-semibold mb-2 text-green-300">Interactive Scheduling Demo</h4>
+                <div class="bg-gray-800 p-3 rounded">
+                    <div id="sched-simulator" class="mb-4">
+                        <div class="flex items-center mb-4">
+                            <button id="start-sim" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Start Simulation</button>
+                            <button id="reset-sim" class="ml-2 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-500">Reset</button>
+                        </div>
+                        <pre id="output" class="bg-gray-900 p-3 rounded text-gray-300 font-mono text-sm max-h-64 overflow-y-auto"></pre>
+                    </div>
+                    <script>
+                        const output = document.getElementById('output');
+                        const startButton = document.getElementById('start-sim');
+                        const resetButton = document.getElementById('reset-sim');
+
+                        startButton.addEventListener('click', () => {
+                            output.textContent = '[  OK  ] Starting process scheduling simulation...\n';
+                            output.textContent += 'Time(ms)  PID  Priority  Status\n';
+                            output.textContent += '--------------------------------\n';
+
+                            const processes = [
+                                { id: 1, priority: 10, runtime: 200, name: 'task1' },
+                                { id: 2, priority: 5, runtime: 300, name: 'task2' },
+                                { id: 3, priority: 15, runtime: 100, name: 'task3' }
+                            ];
+
+                            processes.sort((a, b) => b.priority - a.priority);
+
+                            let time = 0;
+                            processes.forEach(p => {
+                                setTimeout(() => {
+                                    const paddedTime = time.toString().padStart(7, ' ');
+                                    const paddedPid = p.id.toString().padStart(3, ' ');
+                                    const paddedPriority = p.priority.toString().padStart(8, ' ');
+                                    output.textContent += `${paddedTime}  ${paddedPid}  ${paddedPriority}  Running (${p.name})\n`;
+                                    output.scrollTop = output.scrollHeight;
+                                }, time);
+                                time += p.runtime;
+                            });
+
+                            setTimeout(() => {
+                                output.textContent += '[  OK  ] Simulation complete.\n';
+                                output.scrollTop = output.scrollHeight;
+                            }, time);
+                        });
+
+                        resetButton.addEventListener('click', () => {
+                            output.textContent = '';
+                        });
+                    </script>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+        <!-- Memory Management Tab -->
+        <div class="tab-content" id="memory">
+    <div class="bg-gray-800 rounded-xl p-6 shadow-lg mb-8">
+        <h2 class="text-3xl font-bold mb-6 text-blue-400">Memory Management</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div>
+                <h3 class="text-xl font-semibold mb-4 text-yellow-300">Virtual Memory</h3>
+                <p class="text-gray-300 mb-4">
+                    Linux uses virtual memory to give each process its own address space. The Memory Management Unit (MMU) translates virtual to physical addresses using paging and segmentation.
+                </p>
+
+                <div class="bg-gray-700 p-4 rounded-lg mb-4">
+                    <h4 class="font-semibold mb-2 text-green-300">Memory Management Techniques</h4>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 text-sm">
+                        <li><span class="font-semibold">Paging:</span> Divides memory into fixed-size pages (typically 4KB)</li>
+                        <li><span class="font-semibold">Segmentation:</span> Divides memory into logical segments of varying sizes</li>
+                        <li><span class="font-semibold">Combined Approach:</span> Modern systems use segmentation with paging</li>
+                    </ul>
+                </div>
+
+                <div class="bg-gray-700 p-4 rounded-lg mb-4">
+                    <h4 class="font-semibold mb-2 text-green-300">Paging in Detail</h4>
+                    <p class="text-gray-300 text-sm mb-2">
+                        Paging divides both virtual and physical memory into fixed-size blocks called pages. The MMU uses page tables to map virtual pages to physical page frames.
+                    </p>
+                    <div class="bg-gray-600 p-3 rounded mb-2">
+                        <h5 class="font-semibold text-blue-300">Page Table Structure</h5>
+                        <ul class="list-disc list-inside text-gray-300 text-xs space-y-1">
+                            <li>Hierarchical page tables (2-4 levels in x86)</li>
+                            <li>Page table entries contain physical addresses and flags</li>
+                            <li>TLB caches recent translations for faster access</li>
+                        </ul>
+                    </div>
+                    <div class="bg-gray-800 p-3 rounded">
+                        <h5 class="font-semibold mb-1 text-blue-300">C Program Demonstrating Paging Effects</h5>
+                        <pre class="bg-gray-900 p-2 rounded text-xs overflow-x-auto"><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+
+#define PAGE_SIZE 4096  // Typical page size
+#define NUM_PAGES 10
+
+int main() {
+    char *pages[NUM_PAGES];
+
+    // Allocate pages
+    for (int i = 0; i < NUM_PAGES; i++) {
+        pages[i] = malloc(PAGE_SIZE);
+        if (!pages[i]) {
+            perror("malloc failed");
+            exit(1);
+        }
+        printf("Allocated page %d at %p\n", i, pages[i]);
+    }
+
+    // Write to each page to ensure they're mapped
+    for (int i = 0; i < NUM_PAGES; i++) {
+        pages[i][0] = i;  // Touch first byte of each page
+    }
+
+    // Pause to examine memory maps
+    printf("Check /proc/%d/maps now. Press enter to continue...", getpid());
+    getchar();
+
+    // Free pages
+    for (int i = 0; i < NUM_PAGES; i++) {
+        free(pages[i]);
+    }
+
+    return 0;
+}</code></pre>
+                        <p class="text-gray-400 text-xs mt-1">Compile with: gcc paging_demo.c -o paging_demo</p>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xl font-semibold mb-4 text-yellow-300">Segmentation</h3>
+                <p class="text-gray-300 mb-4">
+                    Segmentation divides memory into logical units (code, data, stack) that can grow independently. Modern systems use segmentation with paging.
+                </p>
+
+                <div class="bg-gray-700 p-4 rounded-lg mb-4">
+                    <h4 class="font-semibold mb-2 text-green-300">Segment Registers in x86</h4>
+                    <ul class="list-disc list-inside text-gray-300 text-sm space-y-2">
+                        <li><span class="font-semibold">CS:</span> Code Segment (instructions)</li>
+                        <li><span class="font-semibold">DS:</span> Data Segment (global/static data)</li>
+                        <li><span class="font-semibold">SS:</span> Stack Segment (local variables)</li>
+                        <li><span class="font-semibold">ES, FS, GS:</span> Additional data segments</li>
+                    </ul>
+                </div>
+
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <h4 class="font-semibold mb-2 text-green-300">Segmentation in Practice</h4>
+                    <p class="text-gray-300 text-sm mb-2">
+                        While most high-level programming doesn't directly use segmentation, we can demonstrate its effects.
+                    </p>
+                    <div class="bg-gray-800 p-3 rounded">
+                        <h5 class="font-semibold mb-1 text-blue-300">C Program Showing Segmentation Effects</h5>
+                        <pre class="bg-gray-900 p-2 rounded text-xs overflow-x-auto"><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+// Global variables (stored in data segment)
+int global_var = 10;
+const int global_const = 20;
+
+void print_addresses() {
+    // Local variables (stored in stack segment)
+    int local_var = 30;
+    static int static_var = 40;  // Stored in data segment
+
+    printf("Function address: %p\n", &print_addresses);
+    printf("Global variable: %p\n", &global_var);
+    printf("Global constant: %p\n", &global_const);
+    printf("Static variable: %p\n", &static_var);
+    printf("Local variable: %p\n", &local_var);
+
+    // Dynamically allocated memory (heap segment)
+    int *heap_var = malloc(sizeof(int));
+    printf("Heap variable: %p\n", heap_var);
+    free(heap_var);
+}
+
+int main() {
+    printf("Main function: %p\n", &main);
+    print_addresses();
+
+    // Show segment differences
+    printf("\nTypical memory layout:\n");
+    printf("1. Text segment (code): %p\n", &main);
+    printf("2. Data segment (globals): %p\n", &global_var);
+    printf("3. Heap segment (grows up): %p\n", malloc(1));
+    printf("4. Stack segment (grows down): %p\n", &global_var);
+
+    return 0;
+}</code></pre>
+                        <p class="text-gray-400 text-xs mt-1">Compile with: gcc segmentation_demo.c -o segmentation_demo</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+                <h3 class="text-xl font-semibold mb-4 text-yellow-300">Memory Allocation</h3>
+                <p class="text-gray-300 mb-4">
+                    The kernel provides several memory allocation mechanisms:
+                </p>
+
+                <div class="bg-gray-700 p-4 rounded-lg mb-4">
+                    <h4 class="font-semibold text-green-300">Kernel Allocators</h4>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 text-sm mt-2">
+                        <li><span class="font-semibold">Page Allocator:</span> Allocates whole pages (buddy system)</li>
+                        <li><span class="font-semibold">Slab Allocator:</span> Caches for frequently used objects</li>
+                        <li><span class="font-semibold">kmalloc()/kfree():</span> General-purpose kernel memory</li>
+                        <li><span class="font-semibold">vmalloc()/vfree():</span> Virtually contiguous memory</li>
+                    </ul>
+                </div>
+
+                <div class="bg-gray-800 p-4 rounded-lg">
+                    <h4 class="font-semibold mb-2 text-blue-300">Memory Allocation Code Example</h4>
+                    <div id="memory-code" class="code-editor">#include &lt;linux/module.h&gt;
+#include &lt;linux/kernel.h&gt;
+#include &lt;linux/init.h&gt;
+#include &lt;linux/slab.h&gt;
+
+static int __init mem_init(void) {
+    int *ptr;
+
+    // Allocate memory using different methods
+    ptr = kmalloc(sizeof(int) * 100, GFP_KERNEL);
+    if (!ptr) {
+        printk(KERN_ALERT "kmalloc failed\n");
+        return -ENOMEM;
+    }
+    printk(KERN_INFO "kmalloc allocated at %px\n", ptr);
+    kfree(ptr);
+
+    // vmalloc for large, virtually contiguous memory
+    ptr = vmalloc(PAGE_SIZE * 16);  // 16 pages
+    if (!ptr) {
+        printk(KERN_ALERT "vmalloc failed\n");
+        return -ENOMEM;
+    }
+    printk(KERN_INFO "vmalloc allocated at %px\n", ptr);
+    vfree(ptr);
+
+    // Page allocator example
+    struct page *page = alloc_pages(GFP_KERNEL, 0);  // Allocate 1 page
+    if (!page) {
+        printk(KERN_ALERT "alloc_pages failed\n");
+        return -ENOMEM;
+    }
+    printk(KERN_INFO "Allocated page at %px\n", page_address(page));
+    __free_pages(page, 0);
+
+    return 0;
+}
+
+static void __exit mem_exit(void) {
+    printk(KERN_INFO "Memory module unloaded\n");
+}
+
+module_init(mem_init);
+module_exit(mem_exit);
+MODULE_LICENSE("GPL");</div>
+                    <p class="text-gray-400 text-xs mt-2">Note: This is kernel code that needs to be compiled as a module</p>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xl font-semibold mb-4 text-yellow-300">Memory Mapping and Advanced Topics</h3>
+
+                <div class="bg-gray-700 p-4 rounded-lg mb-4">
+                    <h4 class="font-semibold mb-2 text-green-300">Memory Mapping Example</h4>
+                    <div class="bg-gray-800 p-3 rounded">
+                        <pre class="bg-gray-900 p-2 rounded text-xs overflow-x-auto"><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;sys/mman.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;unistd.h&gt;
+
+int main() {
+    const size_t length = 4096;  // One page
+    const char *file_path = "/tmp/mmap_example";
+
+    // Create a file for mapping
+    int fd = open(file_path, O_RDWR | O_CREAT, 0666);
+    if (fd == -1) {
+        perror("open failed");
+        exit(1);
+    }
+
+    // Extend file to needed size
+    if (ftruncate(fd, length) == -1) {
+        perror("ftruncate failed");
+        close(fd);
+        exit(1);
+    }
+
+    // Map the file into memory
+    char *mapped = mmap(NULL, length, PROT_READ | PROT_WRITE,
+                       MAP_SHARED, fd, 0);
+    if (mapped == MAP_FAILED) {
+        perror("mmap failed");
+        close(fd);
+        exit(1);
+    }
+
+    printf("File mapped at address: %p\n", mapped);
+
+    // Use the memory
+    sprintf(mapped, "Hello from memory mapping!");
+    printf("Content: %s\n", mapped);
+
+    // Clean up
+    if (munmap(mapped, length) == -1) {
+        perror("munmap failed");
+    }
+    close(fd);
+
+    return 0;
+}</code></pre>
+                        <p class="text-gray-400 text-xs mt-1">Compile with: gcc mmap_demo.c -o mmap_demo</p>
+                    </div>
+                </div>
+
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <h4 class="font-semibold mb-2 text-green-300">Page Table Walk Example</h4>
+                    <p class="text-gray-300 text-sm mb-2">
+                        This example shows how to examine page table entries (requires root privileges):
+                    </p>
+                    <div class="bg-gray-800 p-3 rounded">
+                        <pre class="bg-gray-900 p-2 rounded text-xs overflow-x-auto"><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;stdint.h&gt;
+#include &lt;inttypes.h&gt;
+#include &lt;sys/mman.h&gt;
+
+// For page table walking (Linux specific)
+#include &lt;sys/types.h&gt;
+#include &lt;sys/stat.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;unistd.h&gt;
+
+void print_pagemap_info(uint64_t value) {
+    printf("Page table entry: 0x%" PRIx64 "\n", value);
+    printf("  Present: %d\n", (value & (1ULL << 63)) ? 1 : 0);
+    printf("  Swapped: %d\n", (value & (1ULL << 62)) ? 1 : 0);
+    printf("  File/Shared: %d\n", (value & (1ULL << 61)) ? 1 : 0);
+    printf("  Soft-dirty: %d\n", (value & (1ULL << 55)) ? 1 : 0);
+    printf("  Exclusive: %d\n", (value & (1ULL << 56)) ? 1 : 0);
+}
+
+int main() {
+    int fd;
+    uint64_t value;
+    void *addr = malloc(4096);  // Allocate a page
+
+    if (!addr) {
+        perror("malloc failed");
+        return 1;
+    }
+
+    // Open pagemap file for the current process
+    fd = open("/proc/self/pagemap", O_RDONLY);
+    if (fd == -1) {
+        perror("open pagemap failed");
+        free(addr);
+        return 1;
+    }
+
+    // Calculate offset in pagemap file
+    uintptr_t virtual_addr = (uintptr_t)addr;
+    size_t offset = (virtual_addr / 4096) * sizeof(value);
+
+    if (pread(fd, &value, sizeof(value), offset) != sizeof(value)) {
+        perror("pread failed");
+        close(fd);
+        free(addr);
+        return 1;
+    }
+
+    print_pagemap_info(value);
+
+    close(fd);
+    free(addr);
+    return 0;
+}</code></pre>
+                        <p class="text-gray-400 text-xs mt-1">Note: Requires root privileges to run</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8">
+            <h3 class="text-xl font-semibold mb-4 text-yellow-300">Swapping and OOM</h3>
+            <p class="text-gray-300 mb-4">
+                When physical memory is exhausted, Linux can swap pages to disk. If even swap is full, the Out-Of-Memory (OOM) killer terminates processes.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <h4 class="font-semibold text-green-300">Swapping</h4>
+                    <div class="bg-gray-600 p-2 rounded mt-2">
+                        <p class="font-mono text-xs">$ swapon --show</p>
+                        <p class="text-gray-400 text-xs mt-1">Show active swap devices</p>
+                    </div>
+                    <div class="bg-gray-600 p-2 rounded mt-2">
+                        <p class="font-mono text-xs">$ sudo fallocate -l 1G /swapfile</p>
+                        <p class="text-gray-400 text-xs mt-1">Create swap file</p>
+                    </div>
+                    <div class="bg-gray-600 p-2 rounded mt-2">
+                        <p class="font-mono text-xs">$ sudo mkswap /swapfile</p>
+                        <p class="text-gray-400 text-xs mt-1">Format as swap</p>
+                    </div>
+                </div>
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <h4 class="font-semibold text-green-300">OOM Killer</h4>
+                    <div class="bg-gray-600 p-2 rounded mt-2">
+                        <p class="font-mono text-xs">$ cat /proc/$(pidof process)/oom_score</p>
+                        <p class="text-gray-400 text-xs mt-1">Check OOM score</p>
+                    </div>
+                    <div class="bg-gray-600 p-2 rounded mt-2">
+                        <p class="font-mono text-xs">$ echo -1000 > /proc/$(pidof important)/oom_score_adj</p>
+                        <p class="text-gray-400 text-xs mt-1">Protect process from OOM</p>
+                    </div>
+                    <div class="bg-gray-600 p-2 rounded mt-2">
+                        <p class="font-mono text-xs">$ dmesg | grep -i oom</p>
+                        <p class="text-gray-400 text-xs mt-1">View OOM killer events</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+        <!-- Filesystem Tab -->
+        <div class="tab-content" id="filesystem">
+            <div class="bg-gray-800 rounded-xl p-6 shadow-lg mb-8">
+                <h2 class="text-3xl font-bold mb-6 text-blue-400">Filesystems</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4 text-yellow-300">Virtual Filesystem (VFS)</h3>
+                        <p class="text-gray-300 mb-4">
+                            VFS provides a unified interface to different filesystem implementations. It defines standard operations (open, read, write, etc.) that concrete filesystems must implement.
+                        </p>
+
+                        <div class="bg-gray-700 p-4 rounded-lg mb-4">
+                            <h4 class="font-semibold mb-2 text-green-300">Key VFS Objects</h4>
+                            <ul class="list-disc list-inside text-gray-300 space-y-2 text-sm">
+                                <li><span class="font-semibold">super_block:</span> Represents a mounted filesystem</li>
+                                <li><span class="font-semibold">inode:</span> Represents a file/directory</li>
+                                <li><span class="font-semibold">dentry:</span> Directory entry (name to inode mapping)</li>
+                                <li><span class="font-semibold">file:</span> Represents an open file</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-gray-700 p-4 rounded-lg">
+                            <h4 class="font-semibold mb-2 text-green-300">Filesystem Commands</h4>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="bg-gray-600 p-2 rounded">
+                                    <p class="font-mono text-xs">$ mount</p>
+                                    <p class="text-gray-400 text-xs">Show mounted filesystems</p>
+                                </div>
+                                <div class="bg-gray-600 p-2 rounded">
+                                    <p class="font-mono text-xs">$ df -h</p>
+                                    <p class="text-gray-400 text-xs">Disk space usage</p>
+                                </div>
+                                <div class="bg-gray-600 p-2 rounded">
+                                    <p class="font-mono text-xs">$ lsblk</p>
+                                    <p class="text-gray-400 text-xs">Block devices</p>
+                                </div>
+                                <div class="bg-gray-600 p-2 rounded">
+                                    <p class="font-mono text-xs">$ cat /proc/filesystems</p>
+                                    <p class="text-gray-400 text-xs">Supported filesystems</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4 text-yellow-300">Common Filesystems</h3>
+                        <div class="grid grid-cols-1 gap-4">
+                            <div class="bg-gray-700 p-4 rounded-lg">
+                                <h4 class="font-semibold text-green-300">ext4</h4>
+                                <p class="text-gray-300 text-sm">
+                                    Default Linux filesystem with journaling, extents, and delayed allocation.
+                                </p>
+                            </div>
+                            <div class="bg-gray-700 p-4 rounded-lg">
+                                <h4 class="font-semibold text-green-300">XFS</h4>
+                                <p class="text-gray-300 text-sm">
+                                    High-performance journaling filesystem good for large files.
+                                </p>
+                            </div>
+                            <div class="bg-gray-700 p-4 rounded-lg">
+                                <h4 class="font-semibold text-green-300">Btrfs</h4>
+                                <p class="text-gray-300 text-sm">
+                                    Copy-on-write filesystem with snapshots, compression, and RAID.
+                                </p>
+                            </div>
+                            <div class="bg-gray-700 p-4 rounded-lg">
+                                <h4 class="font-semibold text-green-300">tmpfs</h4>
+                                <p class="text-gray-300 text-sm">
+                                    In-memory filesystem for temporary files.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-xl font-semibold mb-4 text-yellow-300">Filesystem Operations</h3>
+                    <p class="text-gray-300 mb-4">
+                        The kernel provides system calls for filesystem operations. Here's an example of implementing a simple filesystem module:
+                    </p>
+
+                    <div class="bg-gray-800 p-4 rounded-lg">
+                        <h4 class="font-semibold mb-2 text-blue-300">Simple Filesystem Example</h4>
+                        <div id="fs-code" class="code-editor">#include &lt;linux/module.h&gt;
+#include &lt;linux/fs.h&gt;
+#include &lt;linux/uaccess.h&gt;
+
+#define DEVICE_NAME "simple_fs"
+#define BUF_LEN 1024
+
+static char msg[BUF_LEN];
+static int major;
+
+static int device_open(struct inode *inode, struct file *file) {
+    printk(KERN_INFO "Device opened\\n");
+    return 0;
+}
+
+static ssize_t device_read(struct file *filp, char *buffer, size_t length, loff_t *offset) {
+    int bytes_read = 0;
+    if (*offset == 0) {
+        bytes_read = copy_to_user(buffer, msg, length);
+        *offset += length;
+    }
+    return bytes_read;
+}
+
+static ssize_t device_write(struct file *filp, const char *buf, size_t len, loff_t *off) {
+    copy_from_user(msg, buf, len);
+    return len;
+}
+
+static struct file_operations fops = {
+    .read = device_read,
+    .write = device_write,
+    .open = device_open,
+};
+
+static int __init fs_init(void) {
+    major = register_chrdev(0, DEVICE_NAME, &fops);
+    if (major < 0) {
+        printk(KERN_ALERT "Registering char device failed\\n");
+        return major;
+    }
+    printk(KERN_INFO "Registered with major number %d\\n", major);
+    return 0;
+}
+
+static void __exit fs_exit(void) {
+    unregister_chrdev(major, DEVICE_NAME);
+    printk(KERN_INFO "Unregistered\\n");
+}
+
+module_init(fs_init);
+module_exit(fs_exit);
+MODULE_LICENSE("GPL");</div>
+                        <p class="text-gray-400 text-xs mt-2">This creates a simple character device filesystem</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Device Drivers Tab -->
+<div class="tab-content" id="device">
+    <div class="bg-gray-800 rounded-xl p-6 shadow-lg mb-8">
+        <h2 class="text-3xl font-bold mb-6 text-blue-400">Device Drivers</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div>
+                <h3 class="text-xl font-semibold mb-4 text-yellow-300">What Are Device Drivers?</h3>
+                <p class="text-gray-300 mb-4">
+                    Device drivers act as a bridge between the operating system and hardware components. In Linux,
+                    most drivers are implemented as kernel modules, allowing them to be dynamically loaded and unloaded.
+                </p>
+
+                <div class="bg-gray-700 p-4 rounded-lg mb-4">
+                    <h4 class="font-semibold mb-2 text-green-300">Types of Device Drivers</h4>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 text-sm">
+                        <li>
+                            <span class="font-semibold">Character Device Drivers:</span> Handle data as a stream of bytes.
+                            Common examples include serial ports, keyboards, and mice.
+                        </li>
+                        <li>
+                            <span class="font-semibold">Block Device Drivers:</span> Manage data in fixed-size blocks.
+                            Used by storage devices like hard drives, SSDs, and USB sticks.
+                        </li>
+                        <li>
+                            <span class="font-semibold">Network Device Drivers:</span> Operate at the packet level.
+                            Used for devices such as Ethernet, Wi-Fi, or Bluetooth adapters.
+                        </li>
+                        <li>
+                            <span class="font-semibold">Virtual Drivers:</span> Represent pseudo-devices like `/dev/null`, `/dev/random`, or loopback interfaces.
+                        </li>
+                        <li>
+                            <span class="font-semibold">Platform Drivers:</span> Interface with hardware integrated on SoCs, particularly in embedded systems.
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <h4 class="font-semibold mb-2 text-green-300">Useful Device Commands</h4>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="bg-gray-600 p-2 rounded">
+                            <p class="font-mono text-xs">$ ls /dev</p>
+                            <p class="text-gray-400 text-xs">List device files</p>
+                        </div>
+                        <div class="bg-gray-600 p-2 rounded">
+                            <p class="font-mono text-xs">$ lspci</p>
+                            <p class="text-gray-400 text-xs">List PCI devices</p>
+                        </div>
+                        <div class="bg-gray-600 p-2 rounded">
+                            <p class="font-mono text-xs">$ lsusb</p>
+                            <p class="text-gray-400 text-xs">List USB devices</p>
+                        </div>
+                        <div class="bg-gray-600 p-2 rounded">
+                            <p class="font-mono text-xs">$ dmesg | grep driver</p>
+                            <p class="text-gray-400 text-xs">Check driver logs</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xl font-semibold mb-4 text-yellow-300">Character Driver Example</h3>
+                <p class="text-gray-300 mb-4">
+                    Below is a basic example of a Linux character device driver. It demonstrates how to register a device,
+                    implement read/write operations, and unload the driver.
+                </p>
+
+                <div class="bg-gray-900 p-4 rounded-lg overflow-auto text-sm">
+<pre class="text-green-200"><code>// simple_char_driver.c
+#include &lt;linux/module.h&gt;
+#include &lt;linux/fs.h&gt;
+#include &lt;linux/uaccess.h&gt;
+
+#define DEVICE_NAME "mychardev"
+#define BUF_LEN 1024
+
+static int major;
+static char msg[BUF_LEN];
+static int msg_len = 0;
+
+// Called when the device is opened
+static int dev_open(struct inode *inodep, struct file *filep) {
+    printk(KERN_INFO "[mychardev] Device opened\n");
+    return 0;
+}
+
+// Called when data is read from user space
+static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *offset) {
+    if (*offset >= msg_len) return 0;
+    int bytes_read = copy_to_user(buffer, msg, msg_len);
+    *offset += msg_len;
+    return msg_len;
+}
+
+// Called when data is written to the device
+static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, loff_t *offset) {
+    msg_len = (len < BUF_LEN) ? len : BUF_LEN;
+    copy_from_user(msg, buffer, msg_len);
+    return msg_len;
+}
+
+// Define file operations
+static struct file_operations fops = {
+    .open = dev_open,
+    .read = dev_read,
+    .write = dev_write,
+};
+
+// Called when module is loaded
+static int __init driver_init(void) {
+    major = register_chrdev(0, DEVICE_NAME, &fops);
+    if (major < 0) {
+        printk(KERN_ALERT "[mychardev] Failed to register device\n");
+        return major;
+    }
+    printk(KERN_INFO "[mychardev] Registered with major number %d\n", major);
+    return 0;
+}
+
+// Called when module is removed
+static void __exit driver_exit(void) {
+    unregister_chrdev(major, DEVICE_NAME);
+    printk(KERN_INFO "[mychardev] Unregistered device\n");
+}
+
+module_init(driver_init);
+module_exit(driver_exit);
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("Kunal Saraswat");
+MODULE_DESCRIPTION("A Simple Linux Char Driver");
+</code></pre>
+                    <p class="text-gray-400 text-xs mt-2">🔧 Compile with: <code>make -C /lib/modules/$(uname -r)/build M=$(pwd) modules</code></p>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <h3 class="text-xl font-semibold mb-4 text-yellow-300">Interacting from User Space</h3>
+            <p class="text-gray-300 mb-4">
+                After loading the driver, user-space programs can interact with the device using standard I/O operations.
+                First, create the device node using the major number.
+            </p>
+
+            <div class="bg-gray-700 p-4 rounded-lg">
+                <h4 class="font-semibold mb-2 text-green-300">Testing the Driver</h4>
+                <div class="grid grid-cols-1 gap-2">
+                    <div class="bg-gray-600 p-2 rounded">
+                        <p class="font-mono text-xs">$ sudo mknod /dev/mychardev c &lt;major&gt; 0</p>
+                        <p class="text-gray-400 text-xs">Create device file (use major from dmesg)</p>
+                    </div>
+                    <div class="bg-gray-600 p-2 rounded">
+                        <p class="font-mono text-xs">$ echo "Hello Driver" &gt; /dev/mychardev</p>
+                        <p class="text-gray-400 text-xs">Write data to the driver</p>
+                    </div>
+                    <div class="bg-gray-600 p-2 rounded">
+                        <p class="font-mono text-xs">$ cat /dev/mychardev</p>
+                        <p class="text-gray-400 text-xs">Read data from the driver</p>
+                    </div>
+                    <div class="bg-gray-600 p-2 rounded">
+                        <p class="font-mono text-xs">$ dmesg | tail</p>
+                        <p class="text-gray-400 text-xs">Check kernel log messages</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+        <!-- Networking Tab -->
+<div class="tab-content" id="networking">
+    <div class="bg-gray-800 rounded-xl p-6 shadow-lg mb-8">
+        <h2 class="text-3xl font-bold mb-6 text-blue-400">Networking</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div>
+                <h3 class="text-xl font-semibold mb-4 text-yellow-300">Linux Network Stack</h3>
+                <p class="text-gray-300 mb-4">
+                    The Linux networking stack is a powerful and flexible subsystem that implements the TCP/IP protocol suite.
+                    It supports both user space networking (via sockets) and kernel networking (via Netfilter, drivers, etc.).
+                </p>
+
+                <div class="bg-gray-700 p-4 rounded-lg mb-4">
+                    <h4 class="font-semibold mb-2 text-green-300">Key Stack Components</h4>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 text-sm">
+                        <li><span class="font-semibold">Socket Layer:</span> Provides the BSD-compatible socket API (e.g., `socket()`, `bind()`, `accept()`).</li>
+                        <li><span class="font-semibold">Transport Protocols:</span> TCP, UDP, SCTP support for reliable and connectionless communication.</li>
+                        <li><span class="font-semibold">Routing:</span> Determines how packets are forwarded across interfaces.</li>
+                        <li><span class="font-semibold">Netfilter:</span> Hooks used for firewalls and NAT (iptables/nftables).</li>
+                        <li><span class="font-semibold">Network Drivers:</span> Interface with NICs using kernel drivers.</li>
+                    </ul>
+                </div>
+
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <h4 class="font-semibold mb-2 text-green-300">Essential Commands</h4>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="bg-gray-600 p-2 rounded">
+                            <p class="font-mono text-xs">$ ip addr</p>
+                            <p class="text-gray-400 text-xs">List IP addresses and interfaces</p>
+                        </div>
+                        <div class="bg-gray-600 p-2 rounded">
+                            <p class="font-mono text-xs">$ ss -tulnp</p>
+                            <p class="text-gray-400 text-xs">Display socket information</p>
+                        </div>
+                        <div class="bg-gray-600 p-2 rounded">
+                            <p class="font-mono text-xs">$ ip route</p>
+                            <p class="text-gray-400 text-xs">Show routing table</p>
+                        </div>
+                        <div class="bg-gray-600 p-2 rounded">
+                            <p class="font-mono text-xs">$ dmesg | grep eth</p>
+                            <p class="text-gray-400 text-xs">Check NIC logs</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xl font-semibold mb-4 text-yellow-300">Socket Programming (Kernel)</h3>
+                <p class="text-gray-300 mb-4">
+                    Sockets enable communication between devices or processes over a network. While commonly used in user space, they can also be used inside the Linux kernel for special use cases like in-kernel proxies or monitoring.
+                </p>
+
+                <div class="bg-gray-900 p-4 rounded-lg overflow-auto text-sm">
+<pre class="text-green-200"><code>// kernel_socket.c - Create TCP socket in kernel space
+#include &lt;linux/module.h&gt;
+#include &lt;linux/net.h&gt;
+#include &lt;linux/in.h&gt;
+#include &lt;net/sock.h&gt;
+
+static struct socket *sock;
+
+static int __init sock_init(void) {
+    struct sockaddr_in addr = {
+        .sin_family = AF_INET,
+        .sin_port = htons(9000),
+        .sin_addr.s_addr = htonl(INADDR_LOOPBACK),
+    };
+
+    // Create a TCP socket in kernel space
+    if (sock_create_kern(&init_net, AF_INET, SOCK_STREAM, IPPROTO_TCP, &sock) < 0) {
+        printk(KERN_ALERT "[ksocket] Socket creation failed\\n");
+        return -1;
+    }
+
+    // Attempt to connect to the loopback address
+    if (sock->ops->connect(sock, (struct sockaddr *)&addr, sizeof(addr), 0) < 0) {
+        printk(KERN_ALERT "[ksocket] Connection failed\\n");
+        sock_release(sock);
+        return -1;
+    }
+
+    printk(KERN_INFO "[ksocket] Successfully connected\\n");
+    return 0;
+}
+
+static void __exit sock_exit(void) {
+    if (sock) {
+        sock_release(sock);
+        printk(KERN_INFO "[ksocket] Socket released\\n");
+    }
+}
+
+module_init(sock_init);
+module_exit(sock_exit);
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("Kunal Saraswat");
+MODULE_DESCRIPTION("Kernel TCP Socket Example");
+</code></pre>
+                    <p class="text-gray-400 text-xs mt-2">This module connects to TCP port 9000 on 127.0.0.1 from the kernel.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-8">
+            <h3 class="text-xl font-semibold mb-4 text-yellow-300">Netfilter Example: Packet Filtering</h3>
+            <p class="text-gray-300 mb-4">
+                Netfilter allows kernel modules to intercept, modify, or drop packets at various stages of the networking pipeline.
+            </p>
+
+            <div class="bg-gray-900 p-4 rounded-lg overflow-auto text-sm">
+<pre class="text-green-200"><code>// netfilter_drop_icmp.c
+#include &lt;linux/module.h&gt;
+#include &lt;linux/netfilter.h&gt;
+#include &lt;linux/netfilter_ipv4.h&gt;
+
+static struct nf_hook_ops nfho;
+
+// Drop ICMP packets
+static unsigned int hook_func(void *priv, struct sk_buff *skb,
+                             const struct nf_hook_state *state) {
+    struct iphdr *iph = ip_hdr(skb);
+    if (iph && iph->protocol == IPPROTO_ICMP) {
+        printk(KERN_INFO "[netfilter] Dropping ICMP packet\\n");
+        return NF_DROP;
+    }
+    return NF_ACCEPT;
+}
+
+static int __init nf_init(void) {
+    nfho.hook = hook_func;
+    nfho.hooknum = NF_INET_PRE_ROUTING;
+    nfho.pf = PF_INET;
+    nfho.priority = NF_IP_PRI_FIRST;
+
+    nf_register_net_hook(&init_net, &nfho);
+    printk(KERN_INFO "[netfilter] Hook registered\\n");
+    return 0;
+}
+
+static void __exit nf_exit(void) {
+    nf_unregister_net_hook(&init_net, &nfho);
+    printk(KERN_INFO "[netfilter] Hook unregistered\\n");
+}
+
+module_init(nf_init);
+module_exit(nf_exit);
+MODULE_LICENSE("GPL");
+</code></pre>
+                <p class="text-gray-400 text-xs mt-2">This module blocks all ping (ICMP) traffic at the pre-routing hook.</p>
+            </div>
+        </div>
+
+        <div>
+            <h3 class="text-xl font-semibold mb-4 text-yellow-300">📚 Learn Socket Programming</h3>
+            <p class="text-gray-300 mb-4">
+                Whether you're developing in user or kernel space, understanding sockets is key to network programming. Below are trusted resources to build your knowledge:
+            </p>
+
+            <div class="bg-gray-700 p-4 rounded-lg space-y-2 text-sm text-blue-300">
+                <p>▶️ <a href="https://www.youtube.com/watch?v=6Nl1NKeYtU4" target="_blank" class="underline">Socket Programming in C - Basics (YouTube)</a></p>
+                <p>▶️ <a href="https://www.youtube.com/watch?v=6z7GQewK-Ks" target="_blank" class="underline">Advanced Sockets - TCP/UDP Server-Client in C (YouTube)</a></p>
+                <p>📘 <a href="https://beej.us/guide/bgnet/" target="_blank" class="underline">Beej’s Guide to Network Programming (C)</a></p>
+                <p>📘 <a href="https://man7.org/linux/man-pages/man2/socket.2.html" target="_blank" class="underline">Linux Man Pages: socket(2)</a></p>
+                <p>📘 <a href="https://lwn.net/Articles/370528/" target="_blank" class="underline">LWN: Sockets in the Linux Kernel</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+        <!-- Kernel Modules Tab -->
+        <div class="tab-content" id="modules">
+            <div class="bg-gray-800 rounded-xl p-6 shadow-lg mb-8">
+                <h2 class="text-3xl font-bold mb-6 text-blue-400">Kernel Modules</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4 text-yellow-300">Module Basics</h3>
+                        <p class="text-gray-300 mb-4">
+                            Kernel modules are pieces of code that can be loaded and unloaded into the kernel on demand. They extend functionality without requiring a reboot.
+                        </p>
+
+                        <div class="bg-gray-700 p-4 rounded-lg mb-4">
+                            <h4 class="font-semibold mb-2 text-green-300">Module Lifecycle</h4>
+                            <ul class="list-disc list-inside text-gray-300 space-y-2 text-sm">
+                                <li><span class="font-semibold">Compilation:</span> Built against specific kernel version</li>
+                                <li><span class="font-semibold">Loading:</span> insmod or modprobe</li>
+                                <li><span class="font-semibold">Initialization:</span> module_init() function runs</li>
+                                <li><span class="font-semibold">Operation:</span> Provides its services</li>
+                                <li><span class="font-semibold">Cleanup:</span> module_exit() function runs</li>
+                                <li><span class="font-semibold">Unloading:</span> rmmod</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-gray-700 p-4 rounded-lg">
+                            <h4 class="font-semibold mb-2 text-green-300">Module Commands</h4>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="bg-gray-600 p-2 rounded">
+                                    <p class="font-mono text-xs">$ lsmod</p>
+                                    <p class="text-gray-400 text-xs">List loaded modules</p>
+                                </div>
+                                <div class="bg-gray-600 p-2 rounded">
+                                    <p class="font-mono text-xs">$ insmod module.ko</p>
+                                    <p class="text-gray-400 text-xs">Load module</p>
+                                </div>
+                                <div class="bg-gray-600 p-2 rounded">
+                                    <p class="font-mono text-xs">$ rmmod module</p>
+                                    <p class="text-gray-400 text-xs">Remove module</p>
+                                </div>
+                                <div class="bg-gray-600 p-2 rounded">
+                                    <p class="font-mono text-xs">$ modinfo module.ko</p>
+                                    <p class="text-gray-400 text-xs">Module information</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4 text-yellow-300">Module Development</h3>
+                        <p class="text-gray-300 mb-4">
+                            Writing kernel modules requires careful programming as bugs can crash the system. Here's a simple module example:
+                        </p>
+
+                        <div class="bg-gray-800 p-4 rounded-lg">
+                            <h4 class="font-semibold mb-2 text-blue-300">Hello World Module</h4>
+                            <div id="module-code" class="code-editor">#include &lt;linux/module.h&gt;
+#include &lt;linux/kernel.h&gt;
+#include &lt;linux/init.h&gt;
+
+static int __init hello_init(void) {
+    printk(KERN_INFO "Hello, Kernel World!\\n");
+    return 0;
+}
+
+static void __exit hello_exit(void) {
+    printk(KERN_INFO "Goodbye, Kernel World!\\n");
+}
+
+module_init(hello_init);
+module_exit(hello_exit);
+
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("Kunal Saraswat");
+MODULE_DESCRIPTION("A simple Linux driver");
+MODULE_VERSION("0.1");</div>
+                            <p class="text-gray-400 text-xs mt-2">Makefile for this module:</p>
+                            <div class="bg-gray-700 p-3 rounded-lg">
+                                <p class="font-mono text-xs">obj-m := hello.o<br>
+                                all:<br>
+                                &nbsp;&nbsp;make -C /lib/modules/$(uname -r)/build M=$(PWD) modules<br>
+                                clean:<br>
+                                &nbsp;&nbsp;make -C /lib/modules/$(uname -r)/build M=$(PWD) clean</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-xl font-semibold mb-4 text-yellow-300">Module Parameters</h3>
+                    <p class="text-gray-300 mb-4">
+                        Modules can accept parameters when loaded to customize their behavior.
+                    </p>
+
+                    <div class="bg-gray-800 p-4 rounded-lg">
+                        <h4 class="font-semibold mb-2 text-blue-300">Parameter Example</h4>
+                        <div id="param-code" class="code-editor">#include &lt;linux/module.h&gt;
+#include &lt;linux/kernel.h&gt;
+#include &lt;linux/init.h&gt;
+
+static char *mystring = "default";
+static int myint = 1;
+
+module_param(mystring, charp, 0644);
+MODULE_PARM_DESC(mystring, "A character string");
+module_param(myint, int, 0644);
+MODULE_PARM_DESC(myint, "An integer");
+
+static int __init param_init(void) {
+    printk(KERN_INFO "String: %s\\n", mystring);
+    printk(KERN_INFO "Integer: %d\\n", myint);
+    return 0;
+}
+
+static void __exit param_exit(void) {
+    printk(KERN_INFO "Module unloaded\\n");
+}
+
+module_init(param_init);
+module_exit(param_exit);
+MODULE_LICENSE("GPL");</div>
+                        <div class="bg-gray-700 p-3 rounded-lg mt-2">
+                            <p class="font-mono text-xs">$ sudo insmod param.ko mystring="test" myint=42</p>
+                            <p class="text-gray-400 text-xs mt-1">Load with parameters</p>
+                        </div>
+                        <div class="bg-gray-700 p-3 rounded-lg mt-2">
+                            <p class="font-mono text-xs">$ dmesg | tail -n 2</p>
+                            <p class="text-gray-400 text-xs mt-1">View parameter output</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+<div class="tab-content" id="debugging">
+    <div class="bg-gray-800 rounded-xl p-6 shadow-lg mb-8">
+        <h2 class="text-3xl font-bold mb-6 text-blue-400">Kernel Debugging Tools</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div>
+                <h3 class="text-xl font-semibold mb-4 text-yellow-300">Kernel Logging</h3>
+                <p class="text-gray-300 mb-4">
+                    Kernel logging provides insights into system behavior, errors, and events using tools like dmesg and syslog.
+                </p>
+
+                <div class="bg-gray-700 p-4 rounded-lg mb-4">
+                    <h4 class="font-semibold mb-2 text-green-300">Logging Tools</h4>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 text-sm">
+                        <li><span class="font-semibold">dmesg:</span> Displays kernel ring buffer</li>
+                        <li><span class="font-semibold">syslog:</span> System-wide logging</li>
+                        <li><span class="font-semibold">journalctl:</span> Systemd journal logs</li>
+                    </ul>
+                </div>
+
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <h4 class="font-semibold mb-2 text-green-300">dmesg in Detail</h4>
+                    <p class="text-gray-300 text-sm mb-2">
+                        The kernel ring buffer stores messages that can be filtered by log level or facility.
+                    </p>
+                    <div class="bg-gray-600 p-3 rounded mb-2">
+                        <h5 class="font-semibold text-blue-300">Log Levels</h5>
+                        <ul class="list-disc list-inside text-gray-300 text-xs space-y-1">
+                            <li>0: Emergency (system unusable)</li>
+                            <li>1: Alert (action needed)</li>
+                            <li>3: Error (error conditions)</li>
+                            <li>7: Debug (debug messages)</li>
+                        </ul>
+                    </div>
+                    <div class="bg-gray-800 p-3 rounded">
+                        <h5 class="font-semibold mb-1 text-blue-300">C Program to Trigger Kernel Log</h5>
+                        <pre class="bg-gray-900 p-2 rounded text-xs overflow-x-auto"><code class="language-c">#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+
+static int __init debug_init(void) {
+    printk(KERN_EMERG "Emergency message\n");
+    printk(KERN_ALERT "Alert message\n");
+    printk(KERN_ERR "Error message\n");
+    printk(KERN_INFO "Info message\n");
+    return 0;
+}
+
+static void __exit debug_exit(void) {
+    printk(KERN_INFO "Debug module unloaded\n");
+}
+
+module_init(debug_init);
+module_exit(debug_exit);
+MODULE_LICENSE("GPL");
+</code></pre>
+                        <p class="text-gray-400 text-xs mt-1">Compile as kernel module: make</p>
+                        <p class="text-gray-400 text-xs">Load with: sudo insmod debug.ko</p>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xl font-semibold mb-4 text-yellow-300">Tracing Tools</h3>
+                <p class="text-gray-300 mb-4">
+                    Tracing tools like ftrace and perf provide detailed insights into kernel and process behavior.
+                </p>
+
+                <div class="bg-gray-700 p-4 rounded-lg mb-4">
+                    <h4 class="font-semibold mb-2 text-green-300">Tracing Mechanisms</h4>
+                    <ul class="list-disc list-inside text-gray-300 text-sm space-y-2">
+                        <li><span class="font-semibold">ftrace:</span> Kernel function tracing</li>
+                        <li><span class="font-semibold">perf:</span> Performance analysis</li>
+                        <li><span class="font-semibold">trace-cmd:</span> Simplified ftrace interface</li>
+                    </ul>
+                </div>
+
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <h4 class="font-semibold mb-2 text-green-300">ftrace Example</h4>
+                    <p class="text-gray-300 text-sm mb-2">
+                        Enable function tracing to monitor kernel activity.
+                    </p>
+                    <div class="bg-gray-800 p-3 rounded">
+                        <pre class="bg-gray-900 p-2 rounded text-xs overflow-x-auto"><code class="language-bash"># Enable function tracing
+echo function > /sys/kernel/debug/tracing/current_tracer
+echo 1 > /sys/kernel/debug/tracing/tracing_on
+
+# Run a command to trace
+sleep 1
+
+# Stop tracing and view results
+echo 0 > /sys/kernel/debug/tracing/tracing_on
+cat /sys/kernel/debug/tracing/trace
+</code></pre>
+                        <p class="text-gray-400 text-xs mt-1">Note: Requires root and debugfs mounted</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+                <h3 class="text-xl font-semibold mb-4 text-yellow-300">Debugging with GDB</h3>
+                <p class="text-gray-300 mb-4">
+                    GDB can debug kernel code with tools like kgdb or QEMU for remote debugging.
+                </p>
+
+                <div class="bg-gray-700 p-4 rounded-lg mb-4">
+                    <h4 class="font-semibold text-green-300">Debugging Setup</h4>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 text-sm mt-2">
+                        <li><span class="font-semibold">kgdb:</span> Kernel debugger over serial</li>
+                        <li><span class="font-semibold">QEMU:</span> Emulate kernel for debugging</li>
+                        <li><span class="font-semibold">vmlinux:</span> Uncompressed kernel for symbols</li>
+                    </ul>
+                </div>
+
+                <div class="bg-gray-800 p-4 rounded-lg">
+                    <h4 class="font-semibold mb-2 text-blue-300">QEMU GDB Debugging</h4>
+                    <pre class="bg-gray-900 p-2 rounded text-xs overflow-x-auto"><code class="language-bash"># Start QEMU with GDB server
+qemu-system-x86_64 -s -S -kernel bzImage -initrd initrd.img
+
+# Connect GDB to QEMU
+gdb vmlinux
+(gdb) target remote :1234
+(gdb) break start_kernel
+(gdb) continue
+</code></pre>
+                    <p class="text-gray-400 text-xs mt-2">Note: Requires kernel compiled with CONFIG_KGDB</p>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xl font-semibold mb-4 text-yellow-300">Crash Analysis</h3>
+
+                <div class="bg-gray-700 p-4 rounded-lg mb-4">
+                    <h4 class="font-semibold mb-2 text-green-300">Crash Dump Tools</h4>
+                    <div class="bg-gray-800 p-3 rounded">
+                        <pre class="bg-gray-900 p-2 rounded text-xs overflow-x-auto"><code class="language-bash"># Enable kdump
+sudo systemctl enable kdump
+
+# Analyze crash dump with crash tool
+crash /vmcore /usr/lib/debug/lib/modules/$(uname -r)/vmlinux
+</code></pre>
+                        <p class="text-gray-400 text-xs mt-1">Note: Requires kdump configuration</p>
+                    </div>
+                </div>
+
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <h4 class="font-semibold mb-2 text-green-300">Kernel Log Visualizer</h4>
+                    <div class="bg-gray-800 p-3 rounded">
+                        <div id="log-visualizer" class="mb-4">
+                            <div class="flex items-center mb-4">
+                                <button id="start-log" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Simulate Kernel Log</button>
+                                <select id="log-level-filter" class="ml-2 px-2 py-1 bg-gray-600 text-gray-300 rounded">
+                                    <option value="all">All Levels</option>
+                                    <option value="emerg">Emergency</option>
+                                    <option value="alert">Alert</option>
+                                    <option value="err">Error</option>
+                                    <option value="info">Info</option>
+                                </select>
+                            </div>
+                            <pre id="log-output" class="bg-gray-900 p-3 rounded text-gray-300 font-mono text-sm max-h-64 overflow-y-auto"></pre>
+                        </div>
+                        <script>
+                            document.getElementById('start-log').addEventListener('click', () => {
+                                const output = document.getElementById('log-output');
+                                const filter = document.getElementById('log-level-filter').value;
+                                output.textContent = '[  OK  ] Starting kernel log simulation...\n';
+
+                                const logs = [
+                                    { timestamp: 0.123456, facility: 'kernel', level: 'info', msg: 'Booting Linux on physical CPU 0x00000000' },
+                                    { timestamp: 0.234567, facility: 'kernel', level: 'info', msg: 'random: crng init done, entropy fully initialized' },
+                                    { timestamp: 0.345678, facility: 'kernel', level: 'err', msg: 'ata1: SATA link down (SStatus 0 SControl 300)' },
+                                    { timestamp: 0.456789, facility: 'kernel', level: 'alert', msg: 'oom-kill: Out of memory: Killed process 1234 (httpd) total-vm:1024kB' },
+                                    { timestamp: 0.567890, facility: 'kernel', level: 'emerg', msg: 'Kernel panic - not syncing: Fatal exception in interrupt' }
+                                ];
+
+                                let time = 0;
+                                logs.forEach(log => {
+                                    if (filter === 'all' || filter === log.level) {
+                                        setTimeout(() => {
+                                            output.textContent += `[${log.timestamp.toFixed(6)}] ${log.facility}: ${log.msg}\n`;
+                                            output.scrollTop = output.scrollHeight;
+                                        }, time);
+                                        time += 200;
+                                    }
+                                });
+
+                                setTimeout(() => {
+                                    output.textContent += '[  OK  ] Kernel log simulation complete.\n';
+                                    output.scrollTop = output.scrollHeight;
+                                }, time);
+                            });
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+        <!-- Development Tab -->
+<div class="tab-content" id="development">
+    <div class="bg-gray-800 rounded-xl p-6 shadow-lg mb-8">
+        <h2 class="text-3xl font-bold mb-6 text-blue-400">Kernel Development</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div>
+                <h3 class="text-xl font-semibold mb-4 text-yellow-300">Kernel Module Development</h3>
+                <p class="text-gray-300 mb-4">
+                    Step-by-step guide to creating a simple kernel module:
+                </p>
+
+                <div class="bg-gray-700 p-4 rounded-lg mb-4">
+                    <h4 class="font-semibold mb-2 text-green-300">1. Create Module Files</h4>
+                    <div class="bg-gray-800 p-3 rounded mb-2">
+                        <p class="font-mono text-xs">hello.c</p>
+                        <div class="code-editor">#include &lt;linux/init.h&gt;
+#include &lt;linux/module.h&gt;
+#include &lt;linux/kernel.h&gt;
+
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("Kunal Saraswat");
+MODULE_DESCRIPTION("Simple Linux Kernel Module");
+
+static int __init hello_init(void) {
+    printk(KERN_INFO "Hello, Kernel World!\n");
+    return 0;
+}
+
+static void __exit hello_exit(void) {
+    printk(KERN_INFO "Goodbye, Kernel World!\n");
+}
+
+module_init(hello_init);
+module_exit(hello_exit);</div>
+                    </div>
+
+                    <div class="bg-gray-800 p-3 rounded">
+                        <p class="font-mono text-xs">Makefile</p>
+                        <div class="code-editor">obj-m := hello.o
+KDIR := /lib/modules/$(shell uname -r)/build
+PWD := $(shell pwd)
+
+all:
+    $(MAKE) -C $(KDIR) M=$(PWD) modules
+
+clean:
+    $(MAKE) -C $(KDIR) M=$(PWD) clean</div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <h4 class="font-semibold mb-2 text-green-300">2. Build and Test Module</h4>
+                    <div class="grid grid-cols-1 gap-2">
+                        <div class="bg-gray-600 p-2 rounded">
+                            <p class="font-mono text-xs">$ make</p>
+                            <p class="text-gray-400 text-xs">Build the module (generates hello.ko)</p>
+                        </div>
+                        <div class="bg-gray-600 p-2 rounded">
+                            <p class="font-mono text-xs">$ sudo insmod hello.ko</p>
+                            <p class="text-gray-400 text-xs">Load module into kernel</p>
+                        </div>
+                        <div class="bg-gray-600 p-2 rounded">
+                            <p class="font-mono text-xs">$ dmesg | tail</p>
+                            <p class="text-gray-400 text-xs">View module output</p>
+                        </div>
+                        <div class="bg-gray-600 p-2 rounded">
+                            <p class="font-mono text-xs">$ sudo rmmod hello</p>
+                            <p class="text-gray-400 text-xs">Remove module</p>
+                        </div>
+                        <div class="bg-gray-600 p-2 rounded">
+                            <p class="font-mono text-xs">$ lsmod | grep hello</p>
+                            <p class="text-gray-400 text-xs">Check if module is loaded</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-xl font-semibold mb-4 text-yellow-300">Advanced Module Development</h3>
+                <p class="text-gray-300 mb-4">
+                    Creating a character device driver with file operations:
+                </p>
+
+                <div class="bg-gray-700 p-4 rounded-lg mb-4">
+                    <h4 class="font-semibold mb-2 text-green-300">File Structure</h4>
+                    <div class="bg-gray-800 p-3 rounded">
+                        <p class="font-mono text-xs">chardev/</p>
+                        <div class="code-editor">chardev/
+├── chardev.c      # Main driver code
+├── Makefile       # Build configuration
+├── test_ioctl.c   # Userspace test program
+└── README.md      # Documentation</div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <h4 class="font-semibold mb-2 text-green-300">Key Components</h4>
+                    <div class="bg-gray-800 p-3 rounded mb-2">
+                        <p class="font-mono text-xs">chardev.c (partial)</p>
+                        <div class="code-editor">#include &lt;linux/fs.h&gt;
+#include &lt;linux/cdev.h&gt;
+
+static int device_open(struct inode *, struct file *);
+static int device_release(struct inode *, struct file *);
+static ssize_t device_read(struct file *, char __user *, size_t, loff_t *);
+static ssize_t device_write(struct file *, const char __user *, size_t, loff_t *);
+static long device_ioctl(struct file *, unsigned int, unsigned long);
+
+static struct file_operations fops = {
+    .open = device_open,
+    .release = device_release,
+    .read = device_read,
+    .write = device_write,
+    .unlocked_ioctl = device_ioctl
+};
+
+static int __init chardev_init(void) {
+    register_chrdev(MAJOR_NUM, DEVICE_NAME, &fops);
+    // ...
+}</div>
+                    </div>
+
+                    <div class="bg-gray-800 p-3 rounded">
+                        <p class="font-mono text-xs">Makefile</p>
+                        <div class="code-editor">obj-m := chardev.o
+KDIR := /lib/modules/$(shell uname -r)/build
+PWD := $(shell pwd)
+
+all:
+    $(MAKE) -C $(KDIR) M=$(PWD) modules
+
+test:
+    gcc -o test_ioctl test_ioctl.c
+
+clean:
+    $(MAKE) -C $(KDIR) M=$(PWD) clean
+    rm -f test_ioctl</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <h3 class="text-xl font-semibold mb-4 text-yellow-300">Full Kernel Development</h3>
+            <p class="text-gray-300 mb-4">
+                Building and installing a custom kernel:
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <h4 class="font-semibold text-green-300">1. Get Source</h4>
+                    <div class="bg-gray-600 p-2 rounded mt-2">
+                        <p class="font-mono text-xs">$ git clone --depth 1 \<br>&nbsp;&nbsp;git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git</p>
+                    </div>
+                    <p class="text-gray-300 text-xs mt-2">
+                        Or download from kernel.org
+                    </p>
+                </div>
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <h4 class="font-semibold text-green-300">2. Configure</h4>
+                    <div class="bg-gray-600 p-2 rounded mt-2">
+                        <p class="font-mono text-xs">$ make defconfig</p>
+                    </div>
+                    <div class="bg-gray-600 p-2 rounded mt-1">
+                        <p class="font-mono text-xs">$ make menuconfig</p>
+                    </div>
+                    <p class="text-gray-300 text-xs mt-2">
+                        Enable/disable features as needed
+                    </p>
+                </div>
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <h4 class="font-semibold text-green-300">3. Build & Install</h4>
+                    <div class="bg-gray-600 p-2 rounded mt-2">
+                        <p class="font-mono text-xs">$ make -j$(nproc)</p>
+                    </div>
+                    <div class="bg-gray-600 p-2 rounded mt-1">
+                        <p class="font-mono text-xs">$ sudo make modules_install install</p>
+                    </div>
+                    <p class="text-gray-300 text-xs mt-2">
+                        Update bootloader after installation
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-gray-700 p-4 rounded-lg">
+    <h4 class="font-semibold mb-2 text-green-300">Learning Resources</h4>
+    <ul class="list-disc list-inside text-gray-300 space-y-2 text-sm">
+        <li><span class="font-semibold">Books:</span> "Linux Device Drivers" by Corbet et al., "Understanding the Linux Kernel" by Bovet</li>
+        <li><span class="font-semibold">Online:</span> kernelnewbies.org, lwn.net/kernel/</li>
+        <li><span class="font-semibold">Documentation:</span> Kernel source Documentation/ directory</li>
+        <li><span class="font-semibold">Courses:</span> Linux Foundation's "Linux Kernel Development"</li>
+        <li><span class="font-semibold">Practice:</span> Start with small modules, study existing drivers</li>
+        <li><span class="font-semibold">Community:</span> Join kernel mailing lists, attend conferences</li>
+        <li><span class="font-semibold">YouTube Tutorials:</span>
+            <ul class="list-circle list-inside ml-4 mt-1 space-y-1">
+                <li><a href="https://www.youtube.com/watch?v=WiZ05pnHZqM" class="text-blue-400 hover:underline" target="_blank">Linux Kernel Programming 01: Compile and Boot</a></li>
+                <li><a href="https://www.youtube.com/watch?v=cwD49sFZSF4" class="text-blue-400 hover:underline" target="_blank">Writing Your First Linux Kernel Module</a></li>
+                <li><a href="https://www.youtube.com/watch?v=Zg8tnxR_z94" class="text-blue-400 hover:underline" target="_blank">Character Device Driver Development</a></li>
+                <li><a href="https://www.youtube.com/watch?v=NDXYpR_m1CU" class="text-blue-400 hover:underline" target="_blank">Linux Kernel Debugging Techniques</a></li>
+                <li><a href="https://www.youtube.com/watch?v=HNIg3TXfdX8&list=PLrGN1Qi7t67V-9uXzj4VSQCffntfvn42v" class="text-blue-400 hover:underline" target="_blank">Linux Kernel Development Setup</a></li>
+            </ul>
+        </li>
+    </ul>
+</div>
+        </div>
+    </div>
+</div>
+
+     <script>
+        // Initialize ACE editors for all code-editor divs
+        document.querySelectorAll('.code-editor').forEach(editor => {
+            ace.edit(editor, {
+                mode: "ace/mode/c_cpp",
+                theme: "ace/theme/twilight",
+                fontSize: "12px",
+                readOnly: true,
+                showPrintMargin: false
+            });
+        });
+        document.addEventListener('DOMContentLoaded', () => {
+    // Select all tabs and content sections
+    const tabs = document.querySelectorAll('.nav-tabs .tab');
+    const contents = document.querySelectorAll('.tab-content .content');
+
+    // Handle tab clicks
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Remove active class from all tabs and content
+            tabs.forEach(t => t.classList.remove('active'));
+            contents.forEach(c => c.classList.remove('active'));
+
+            // Add active class to clicked tab and corresponding content
+            tab.classList.add('active');
+            const tabId = tab.getAttribute('data-tab');
+            document.getElementById(tabId).classList.add('active');
+        });
+    });
+});
+        // Tab switching
+         document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      // Remove active class from all buttons
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("bg-blue-600", "text-white", "active"));
+
+      // Add active class to the clicked button
+      btn.classList.add("bg-blue-600", "text-white", "active");
+
+      // Hide all tab contents
+      document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
+
+      // Show selected tab content
+      const target = btn.getAttribute("data-tab");
+      document.getElementById(target).classList.add("active");
+    });
+  });
+        // Function to simulate running code (just for demo)
+        function runCode(editorId) {
+            const outputDiv = document.getElementById(editorId + '-output');
+            outputDiv.classList.remove('hidden');
+
+            // This is just a demo - in a real app you'd need a backend to run code
+            if (editorId === 'process-code') {
+                outputDiv.textContent = `Parent PID: 1234\nChild PID: 1235\n-rw-r--r-- 1 user user 4096 Aug 10 10:00 example.txt\nChild completed`;
+            } else {
+                outputDiv.textContent = "Code execution simulated (this would require a backend in a real application)";
+            }
+        }
+    </script>
+        <script>
+        const toggleButton = document.querySelector('.author-toggle');
+        const authorDetails = document.querySelector('.author-details');
+
+        toggleButton.addEventListener('click', () => {
+            authorDetails.classList.toggle('active');
+        });
+    </script>
+</body>
+</html>
